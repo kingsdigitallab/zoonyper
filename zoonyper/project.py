@@ -26,7 +26,7 @@ class Project(Utils):
     _subject_sets = {}
     _subject_urls = {}
 
-    _frames = {}
+    _raw_frames = {}
 
     _workflows = None
     _subjects = None
@@ -398,12 +398,12 @@ class Project(Utils):
     def load_frame(self, name):
         """TODO"""
 
-        if not self._frames:
-            self._frames = {}
+        if not self._raw_frames:
+            self._raw_frames = {}
 
         if name == "classifications":
-            if not "classifications" in self._frames or pd.isna(
-                self._frames.get("classifications")
+            if not "classifications" in self._raw_frames or pd.isna(
+                self._raw_frames.get("classifications")
             ):
                 classifications = pd.read_csv(self.classifications_path)
                 classifications.set_index("classification_id", inplace=True)
@@ -429,12 +429,14 @@ class Project(Utils):
                     )
                     self._redacted = {}
 
-                self._frames["classifications"] = classifications
+                self._raw_frames["classifications"] = classifications
 
-            return self._frames["classifications"]
+            return self._raw_frames["classifications"]
 
         if name == "subjects":
-            if not "subjects" in self._frames or pd.isna(self._frames.get("subjects")):
+            if not "subjects" in self._raw_frames or pd.isna(
+                self._raw_frames.get("subjects")
+            ):
                 subjects = pd.read_csv(self.subjects_path)
                 subjects.set_index("subject_id", inplace=True)
                 subjects = self._fix_json_cols(
@@ -460,13 +462,13 @@ class Project(Utils):
                     },
                 )
 
-                self._frames["subjects"] = subjects
+                self._raw_frames["subjects"] = subjects
 
-            return self._frames["subjects"]
+            return self._raw_frames["subjects"]
 
         if name == "workflows":
-            if not "workflows" in self._frames or pd.isna(
-                self._frames.get("workflows")
+            if not "workflows" in self._raw_frames or pd.isna(
+                self._raw_frames.get("workflows")
             ):
                 workflows = pd.read_csv(self.workflows_path)
                 workflows.set_index("workflow_id", inplace=True)
@@ -475,12 +477,14 @@ class Project(Utils):
                 workflows.first_task = workflows.first_task.fillna("")
                 workflows.tutorial_subject_id = workflows.tutorial_subject_id.fillna("")
 
-                self._frames["workflows"] = workflows
+                self._raw_frames["workflows"] = workflows
 
-            return self._frames["workflows"]
+            return self._raw_frames["workflows"]
 
         if name == "comments":
-            if not "comments" in self._frames or pd.isna(self._frames.get("comments")):
+            if not "comments" in self._raw_frames or pd.isna(
+                self._raw_frames.get("comments")
+            ):
                 comments = pd.read_json(self.comments_path)
                 comments.set_index("comment_id", inplace=True)
 
@@ -495,12 +499,12 @@ class Project(Utils):
                     },
                 )
 
-                self._frames["comments"] = comments
+                self._raw_frames["comments"] = comments
 
-            return self._frames["comments"]
+            return self._raw_frames["comments"]
 
         if name == "tags":
-            if not "tags" in self._frames or pd.isna(self._frames.get("tags")):
+            if not "tags" in self._raw_frames or pd.isna(self._raw_frames.get("tags")):
                 tags = pd.read_json(self.tags_path)
                 tags.set_index("id", inplace=True)
 
@@ -515,15 +519,15 @@ class Project(Utils):
                     },
                 )
 
-                self._frames["tags"] = tags
+                self._raw_frames["tags"] = tags
 
-            return self._frames["tags"]
+            return self._raw_frames["tags"]
 
     @property
     def frames(self):
         """TODO"""
 
-        existing_frames = list(self._frames.keys())
+        existing_frames = list(self._raw_frames.keys())
 
         if not all(
             [
@@ -552,10 +556,10 @@ class Project(Utils):
             self.load_frame("tags")
 
             # Check + warn for size excess
-            for name, frame in self._frames.items():
+            for name, frame in self._raw_frames.items():
                 self._check_length(frame, name)
 
-        return self._frames
+        return self._raw_frames
 
     def _preprocess(self, df: pd.DataFrame, date_cols: list):
         if not self.parse_dates:
