@@ -1,11 +1,19 @@
 from collections import ChainMap, Counter
 from pathlib import Path
+from tqdm import tqdm
 import pandas as pd
+import json
 import random
+import re
 import requests
 import time
 
 from .utils import Utils
+
+# TODO: this is not elegant but here we are - to save `flattened[column]` assignment below
+pd.options.mode.chained_assignment = None
+
+TASK_COLUMN = re.compile(r"T\d{1,2}")
 
 
 class Project(Utils):
@@ -27,6 +35,8 @@ class Project(Utils):
     _tags = None
     _discussions = None
     _boards = None
+
+    download_dir = "downloads"
 
     def __init__(
         self,
@@ -260,9 +270,17 @@ class Project(Utils):
         return list(self.subjects.query(f"workflow_id=={workflow_id}").index)
 
     def download_workflow(
-        self, workflow_id=None, download_dir="downloads", timeout=5, sleep=(2, 5)
+        self,
+        workflow_id=None,
+        download_dir=None,
+        timeout=5,
+        sleep=(2, 5),
+        organize_by_workflow=True,
     ):
         """TODO"""
+
+        if not download_dir:
+            download_dir = self.download_dir
 
         if not isinstance(workflow_id, int):
             raise RuntimeError(f"workflow_id provided must be an integer")
@@ -274,17 +292,24 @@ class Project(Utils):
 
         # Setup all directories first
         for subject_id, urls in subjects_to_download.items():
-            current_dir = (
-                Path(download_dir) / Path(str(workflow_id)) / Path(str(subject_id))
-            )
+            if organize_by_workflow:
+                current_dir = (
+                    Path(download_dir) / Path(str(workflow_id)) / Path(str(subject_id))
+                )
+            else:
+                current_dir = Path(download_dir) / Path(str(subject_id))
 
             if not current_dir.exists():
                 current_dir.mkdir(parents=True)
 
-        for subject_id, urls in subjects_to_download.items():
-            current_dir = (
-                Path(download_dir) / Path(str(workflow_id)) / Path(str(subject_id))
-            )
+        for subject_id, urls in tqdm(subjects_to_download.items()):
+            if organize_by_workflow:
+                current_dir = (
+                    Path(download_dir) / Path(str(workflow_id)) / Path(str(subject_id))
+                )
+            else:
+                current_dir = Path(download_dir) / Path(str(subject_id))
+
             has_downloaded = False
 
             if not current_dir.exists():
@@ -298,10 +323,11 @@ class Project(Utils):
                     save_file.write_bytes(r.content)
                     has_downloaded = True
 
-            print(f"Subject {subject_id} downloaded:")
-            print("- " + "- ".join(urls))
+            # ### tqdm stops this:
+            # print(f"Subject {subject_id} downloaded:")
+            # print("- " + "- ".join(urls))
 
-            if has_downloaded:
+            if has_downloaded and isinstance(sleep, tuple):
                 time.sleep(random.randint(*sleep))
 
     @property
@@ -790,3 +816,61 @@ class Project(Utils):
         ax = df.plot(figsize=(width, height))
         fig = ax.get_figure()
         return fig
+
+    @property
+    def flattened_annotations(self):
+        def extract_values(x):
+            if isinstance(x, str):
+                try:
+                    x = json.loads(x)
+                except:
+                    return x
+
+            if isinstance(x, list):
+                if all([isinstance(y, dict) for y in x]):
+                    values = []
+                    for _dict in x:
+                        for detail in _dict.get("details"):
+
+                            if isinstance(detail.get("value"), str) or isinstance(
+                                detail.get("value"), int
+                            ):
+                                values.append(str(detail.get("value")))
+                            elif not detail.get("value"):
+                                return ""
+                            elif isinstance(detail.get("value"), list):
+                                if len(detail.get("value")) == 1:
+                                    values.append(str(detail.get("value")))
+                                else:
+                                    values.append(
+                                        ",".join([str(x) for x in detail.get("value")])
+                                    )
+                            else:
+                                print("NONE")
+                    return "|".join([x for x in values if x])
+                else:
+                    return "|".join([str(y) for y in x if y])
+
+            elif isinstance(x, dict):
+                values = []
+                if len(x.get("details")) == 1:
+                    values.append(str(x.get("details")[0].get("value")))
+
+                return "|".join([x for x in values if x])
+            elif isinstance(x, str):
+                return x
+            elif isinstance(x, int):
+                return str(x)
+            else:
+                raise RuntimeError("An error occurred interpreting", x)
+
+        task_columns = sorted(
+            [x for x in self.classifications.columns if TASK_COLUMN.search(x)]
+        )
+
+        flattened = self.classifications[["workflow_id", "subject_ids"] + task_columns]
+
+        for column in task_columns:
+            flattened[column] = flattened[column].apply(extract_values)
+
+        return flattened
