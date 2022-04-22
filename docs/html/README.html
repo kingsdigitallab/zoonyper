@@ -154,13 +154,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">Welcome to Zoonyper’s documentation!</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="simple">
-</ul>
-</li>
-</ul>
-
+  
 </div>
 </div>
 
@@ -191,21 +185,22 @@
           </label>
         </div>
         <article role="main">
-          <section id="welcome-to-zoonyper-s-documentation">
-<h1>Welcome to Zoonyper’s documentation!<a class="headerlink" href="#welcome-to-zoonyper-s-documentation" title="Permalink to this headline">#</a></h1>
+          <section id="about-zoonyper">
+<h1>About <code class="docutils literal notranslate"><span class="pre">zoonyper</span></code><a class="headerlink" href="#about-zoonyper" title="Permalink to this headline">#</a></h1>
 <p><strong>Zoonyper</strong> is a Python library that facilitates interpretation and wrangling for Zooniverse files in Jupyter (and Python more generally).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This project is under active development.</p>
 </div>
+</section>
 <section id="installing-zoonyper">
-<h2>Installing zoonyper<a class="headerlink" href="#installing-zoonyper" title="Permalink to this headline">#</a></h2>
+<h1>Installing zoonyper<a class="headerlink" href="#installing-zoonyper" title="Permalink to this headline">#</a></h1>
 <p>When in production, you can use PyPI to install zoonyper:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ pip install pandas
 </pre></div>
 </div>
 <section id="in-development">
-<h3>In development<a class="headerlink" href="#in-development" title="Permalink to this headline">#</a></h3>
+<h2>In development<a class="headerlink" href="#in-development" title="Permalink to this headline">#</a></h2>
 <p>Because this project is in active development, you will likely need to install from the repository for the time being.</p>
 <p>In order to do so, you need to first ensure that you have installed Poetry:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py <span class="p">|</span> python -
@@ -231,14 +226,14 @@
 </section>
 </section>
 <section id="importing-a-project">
-<h2>Importing a Project<a class="headerlink" href="#importing-a-project" title="Permalink to this headline">#</a></h2>
+<h1>Importing a Project<a class="headerlink" href="#importing-a-project" title="Permalink to this headline">#</a></h1>
 <p>You import the <cite>Project</cite> class from the <cite>zoonyper</cite> library like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">zoonyper</span> <span class="kn">import</span> <span class="n">Project</span>
 </pre></div>
 </div>
 </section>
 <section id="loading-the-base-class">
-<h2>Loading the Base Class<a class="headerlink" href="#loading-the-base-class" title="Permalink to this headline">#</a></h2>
+<h1>Loading the Base Class<a class="headerlink" href="#loading-the-base-class" title="Permalink to this headline">#</a></h1>
 <p>Loading a project is done using the <code class="docutils literal notranslate"><span class="pre">Project</span></code> class:</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="Project">
@@ -250,7 +245,7 @@
 <li><p>Provide a general path (using the <code class="docutils literal notranslate"><span class="pre">path</span></code> keyword argument, <strong>preferred</strong>).</p></li>
 </ol>
 <section id="option-1-individual-file-paths">
-<h3>Option 1: Individual file paths<a class="headerlink" href="#option-1-individual-file-paths" title="Permalink to this headline">#</a></h3>
+<h2>Option 1: Individual file paths<a class="headerlink" href="#option-1-individual-file-paths" title="Permalink to this headline">#</a></h2>
 <p>Providing the path for each of the five required files has the benefit of you being able to specify exactly where the files are located, individually:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">classifications_path</span> <span class="o">=</span> <span class="s2">"&lt;full-path-to&gt;/classifications.csv"</span>
 <span class="n">subjects_path</span> <span class="o">=</span> <span class="s2">"&lt;full-path-to&gt;/subjects.csv"</span>
@@ -269,7 +264,7 @@
 </div>
 </section>
 <section id="option-2-directory">
-<h3>Option 2: Directory<a class="headerlink" href="#option-2-directory" title="Permalink to this headline">#</a></h3>
+<h2>Option 2: Directory<a class="headerlink" href="#option-2-directory" title="Permalink to this headline">#</a></h2>
 <p>In the example above, if all the required files (<code class="docutils literal notranslate"><span class="pre">classifications.csv</span></code>, <code class="docutils literal notranslate"><span class="pre">subjects.csv</span></code>, <code class="docutils literal notranslate"><span class="pre">workflows.csv</span></code>, <code class="docutils literal notranslate"><span class="pre">talk-comments.json</span></code> and <code class="docutils literal notranslate"><span class="pre">talk-tags.json</span></code>) are located in the same path, you can just providing the path where all of them are located, which is a neater way of writing the same thing:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="s2">"&lt;full-path-to-all-files&gt;"</span><span class="p">)</span>
 </pre></div>
@@ -277,7 +272,7 @@
 </section>
 </section>
 <section id="access-all-project-data-frames">
-<h2>Access All Project Data (Frames)<a class="headerlink" href="#access-all-project-data-frames" title="Permalink to this headline">#</a></h2>
+<h1>Access All Project Data (Frames)<a class="headerlink" href="#access-all-project-data-frames" title="Permalink to this headline">#</a></h1>
 <p><code class="docutils literal notranslate"><span class="pre">Project.classifications</span></code> is the classifications DataFrame, and has all the functionality of a regular Pandas DataFrame:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">classifications</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
@@ -291,7 +286,7 @@
 </pre></div>
 </div>
 <section id="shortcuts-to-column-summaries">
-<h3>Shortcuts to Column Summaries<a class="headerlink" href="#shortcuts-to-column-summaries" title="Permalink to this headline">#</a></h3>
+<h2>Shortcuts to Column Summaries<a class="headerlink" href="#shortcuts-to-column-summaries" title="Permalink to this headline">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Project.workflow_ids</span></code> (an attribute) lists all of the project’s workflow IDs:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">workflow_ids</span>
 </pre></div>
@@ -315,7 +310,7 @@
 </section>
 </section>
 <section id="listing-project-and-workflow-participants">
-<h2>Listing Project and Workflow Participants<a class="headerlink" href="#listing-project-and-workflow-participants" title="Permalink to this headline">#</a></h2>
+<h1>Listing Project and Workflow Participants<a class="headerlink" href="#listing-project-and-workflow-participants" title="Permalink to this headline">#</a></h1>
 <p><code class="docutils literal notranslate"><span class="pre">Project.participants()</span></code> offers a quick way of seeing <em>all participants across the entire project</em>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">participants</span><span class="p">()</span>
 </pre></div>
@@ -329,7 +324,7 @@
 </pre></div>
 </div>
 <section id="counting-participants">
-<h3>Counting participants<a class="headerlink" href="#counting-participants" title="Permalink to this headline">#</a></h3>
+<h2>Counting participants<a class="headerlink" href="#counting-participants" title="Permalink to this headline">#</a></h2>
 <p>Counting participants across projects and workflows is also a quickly accessible functionality of the package.</p>
 <p><code class="docutils literal notranslate"><span class="pre">Project.participants_count()</span></code> offers a quick way to see how many participants were in the project altogether:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">participants_count</span><span class="p">()</span>
@@ -341,7 +336,7 @@
 </div>
 </section>
 <section id="logged-in-participants">
-<h3>Logged in participants<a class="headerlink" href="#logged-in-participants" title="Permalink to this headline">#</a></h3>
+<h2>Logged in participants<a class="headerlink" href="#logged-in-participants" title="Permalink to this headline">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Project.logged_in()</span></code> can be used to counting how many classifications were done while users were logged in:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">logged_in</span><span class="p">()</span>
 </pre></div>
@@ -353,7 +348,7 @@
 </section>
 </section>
 <section id="counting-classifications">
-<h2>Counting classifications<a class="headerlink" href="#counting-classifications" title="Permalink to this headline">#</a></h2>
+<h1>Counting classifications<a class="headerlink" href="#counting-classifications" title="Permalink to this headline">#</a></h1>
 <p><code class="docutils literal notranslate"><span class="pre">Project.classification_counts(workflow_id=&lt;workflow</span> <span class="pre">ID&gt;,</span> <span class="pre">task_number=&lt;task</span> <span class="pre">number&gt;)</span></code> is a method that retrieves the number of different classifications per subject ID for any given workflow:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">classification_counts</span><span class="p">(</span><span class="n">workflow_id</span><span class="o">=</span><span class="mi">12038</span><span class="p">,</span> <span class="n">task_number</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
@@ -379,7 +374,7 @@
 </div>
 </section>
 <section id="workflow-timelines">
-<h2>Workflow Timelines<a class="headerlink" href="#workflow-timelines" title="Permalink to this headline">#</a></h2>
+<h1>Workflow Timelines<a class="headerlink" href="#workflow-timelines" title="Permalink to this headline">#</a></h1>
 <p><code class="docutils literal notranslate"><span class="pre">Project.get_workflow_timelines()</span></code> provides the data for the extent of classifications for all workflows in a given project:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">get_workflow_timelines</span><span class="p">()</span>
 </pre></div>
@@ -390,7 +385,7 @@
 </div>
 </section>
 <section id="comments">
-<h2>Comments<a class="headerlink" href="#comments" title="Permalink to this headline">#</a></h2>
+<h1>Comments<a class="headerlink" href="#comments" title="Permalink to this headline">#</a></h1>
 <p><code class="docutils literal notranslate"><span class="pre">Project.comments</span></code> (a property) provides access to all the comments in the project as a pandas DataFrame.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">.</span><span class="n">comments</span>
 </pre></div>
@@ -405,38 +400,7 @@
 </pre></div>
 </div>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Welcome to Zoonyper’s documentation!</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installing-zoonyper">Installing zoonyper</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#in-development">In development</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#importing-a-project">Importing a Project</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#loading-the-base-class">Loading the Base Class</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#option-1-individual-file-paths">Option 1: Individual file paths</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#option-2-directory">Option 2: Directory</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#access-all-project-data-frames">Access All Project Data (Frames)</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#shortcuts-to-column-summaries">Shortcuts to Column Summaries</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#listing-project-and-workflow-participants">Listing Project and Workflow Participants</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#counting-participants">Counting participants</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#logged-in-participants">Logged in participants</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#counting-classifications">Counting classifications</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#workflow-timelines">Workflow Timelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#comments">Comments</a><ul class="simple">
-</ul>
-</li>
-</ul>
-</li>
-</ul>
 </div>
-</section>
 </section>
 
         </article>
@@ -478,7 +442,7 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Welcome to Zoonyper’s documentation!</a><ul>
+<li><a class="reference internal" href="#">About <code class="docutils literal notranslate"><span class="pre">zoonyper</span></code></a></li>
 <li><a class="reference internal" href="#installing-zoonyper">Installing zoonyper</a><ul>
 <li><a class="reference internal" href="#in-development">In development</a></li>
 </ul>
@@ -501,8 +465,6 @@
 <li><a class="reference internal" href="#counting-classifications">Counting classifications</a></li>
 <li><a class="reference internal" href="#workflow-timelines">Workflow Timelines</a></li>
 <li><a class="reference internal" href="#comments">Comments</a></li>
-</ul>
-</li>
 </ul>
 
           </div>

@@ -1,5 +1,5 @@
-Welcome to Zoonyper's documentation!
-=====================================
+About ``zoonyper``
+#############################################################
 
 **Zoonyper** is a Python library that facilitates interpretation and wrangling for Zooniverse files in Jupyter (and Python more generally).
 
@@ -7,7 +7,6 @@ Welcome to Zoonyper's documentation!
 
    This project is under active development.
 
-#############################################################
 Installing zoonyper
 #############################################################
 
@@ -54,7 +53,6 @@ Now you should be able to use ``zoonyper`` as a regular package on your local co
     If you change the source code (located in the ``zoonyper`` directory in the repository), you will need to rerun the ``poetry build`` and the ``pip install dis/zoonyper-0.1.0.tar.gz`` commands again.
 
 
-#############################################################
 Importing a Project
 #############################################################
 
@@ -64,7 +62,7 @@ You import the `Project` class from the `zoonyper` library like this:
 
     from zoonyper import Project
 
-#############################################################
+
 Loading the Base Class
 #############################################################
 
@@ -110,7 +108,7 @@ In the example above, if all the required files (``classifications.csv``, ``subj
 
     project = Project("<full-path-to-all-files>")
 
-#############################################################
+
 Access All Project Data (Frames)
 #############################################################
 
@@ -167,7 +165,7 @@ Using ``Project.workflow_ids`` and ``Project.inactive_workflow_ids``, we can get
 
     project.subject_urls
 
-#############################################################
+
 Listing Project and Workflow Participants
 #############################################################
 
@@ -223,7 +221,7 @@ Similar to the functionality above, if the same function is provided with an opt
     
     project.logged_in(12194)
 
-#############################################################
+
 Counting classifications
 #############################################################
 
@@ -257,7 +255,7 @@ Similarly, we can construct a code block for whenever at least **four annotators
 
     print(agreement)
 
-#############################################################
+
 Workflow Timelines
 #############################################################
 
@@ -273,7 +271,7 @@ Workflow Timelines
 
     project.get_workflow_timelines(include_active=False)
 
-#############################################################
+
 Comments
 #############################################################
 
@@ -297,7 +295,7 @@ To get a pre-filtered comments DataFrame, including only non-staff members, you 
     project.get_subject_comments(73334345)
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
    :caption: Contents:
-
-   README
+   
+   install
