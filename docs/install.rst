@@ -1,4 +1,4 @@
-Installing zoonyper
+Installing Zoonyper
 #############################################################
 
 When in production, you can use PyPI to install zoonyper:
