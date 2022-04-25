@@ -1,19 +1,23 @@
 from collections import ChainMap, Counter
 from pathlib import Path
-from tqdm import tqdm
+from attr import Attribute
+from numpy import True_
 import pandas as pd
+
+import hashlib
 import json
+import os
 import random
 import re
 import requests
 import time
 
-from .utils import Utils
+from .utils import Utils, TASK_COLUMN, tqdm
+from .log import log
+
 
 # TODO: this is not elegant but here we are - to save `flattened[column]` assignment below
 pd.options.mode.chained_assignment = None
-
-TASK_COLUMN = re.compile(r"T\d{1,2}")
 
 
 class Project(Utils):
@@ -35,6 +39,7 @@ class Project(Utils):
     _tags = None
     _discussions = None
     _boards = None
+    _flattened = None
 
     download_dir = "downloads"
 
@@ -197,7 +202,9 @@ class Project(Utils):
         results = self.classifications.query(f"workflow_id=={workflow_id}")
 
         resulting_classifications = {}
-        for subject_ids, rows in results.groupby("subject_ids"):
+        for subject_ids, rows in results.groupby(
+            "subject_ids"
+        ):  # TODO: #3 [testing] What happens if subject_ids contains multiple IDs here?
             all_results = [str(x) for x in rows[f"T{task_number}"]]
             count_results = Counter(all_results)
             resulting_classifications[subject_ids] = dict(count_results)
@@ -268,6 +275,23 @@ class Project(Utils):
             raise RuntimeError("workflow_id provided must be an integer")
 
         return list(self.subjects.query(f"workflow_id=={workflow_id}").index)
+
+    def download_all_subjects(
+        self, download_dir=None, timeout=5, sleep=(2, 5), organize_by_workflow=True
+    ) -> True:
+        """Loops over all the unique workflow IDs and downloads the workflow from all of them."""
+
+        for workflow in self.workflow_ids:
+            log(f"Downloading workflow {workflow}", "INFO")
+            self.download_workflow(
+                workflow,
+                download_dir=download_dir,
+                timeout=timeout,
+                sleep=sleep,
+                organize_by_workflow=organize_by_workflow,
+            )
+
+        return True
 
     def download_workflow(
         self,
@@ -381,8 +405,9 @@ class Project(Utils):
         """TODO"""
         if not include_staff:
             if not self.staff:
-                print(
-                    "Warning: Staff is not set, so `include_staff` set to False has no effects. Use .set_staff method to enable this feature."
+                log(
+                    "Staff is not set, so `include_staff` set to False has no effects. Use .set_staff method to enable this feature.",
+                    "WARN",
                 )
             query = "user_login != '" + "' & user_login != '".join(self.staff) + "'"
             return self.comments.query(query)
@@ -538,21 +563,21 @@ class Project(Utils):
                 "tags" in existing_frames,
             ]
         ):
-            print("Loading all frames...")
+            log("Loading all frames...", "None")
 
-            print(f"--> [classifications] {self.classifications_path.name}")
+            log(f"--> [classifications] {self.classifications_path.name}", "None")
             self.load_frame("classifications")
 
-            print(f"--> [subjects] {self.subjects_path.name}")
+            log(f"--> [subjects] {self.subjects_path.name}", "None")
             self.load_frame("subjects")
 
-            print(f"--> [workflows] {self.workflows_path.name}")
+            log(f"--> [workflows] {self.workflows_path.name}", "None")
             self.load_frame("workflows")
 
-            print(f"--> [comments] {self.comments_path.name}")
+            log(f"--> [comments] {self.comments_path.name}", "None")
             self.load_frame("comments")
 
-            print(f"--> [tags] {self.tags_path.name}")
+            log(f"--> [tags] {self.tags_path.name}", "None")
             self.load_frame("tags")
 
             # Check + warn for size excess
@@ -709,6 +734,31 @@ class Project(Utils):
             # Final preprocessing
             self._subjects = self._preprocess(self._subjects, date_cols)
 
+        if "subject_id_disambiguated" in self._subjects.columns:
+            try:
+                if not self.SUPPRESS_WARN:
+                    log(
+                        "Note that the subject IDs have been disambiguated and the information can be found in the `subject_id_disambiguated` column.",
+                        "INFO",
+                    )
+            except AttributeError:
+                log(
+                    "Note that the subject IDs have been disambiguated and the information can be found in the `subject_id_disambiguated` column.",
+                    "INFO",
+                )
+        else:
+            try:
+                if not self.SUPPRESS_WARN:
+                    log(
+                        "Note that the subject IDs have not yet been disambiguated. If you want to do so, run the `.disambiguate_subjects(<download-dir>)` method.",
+                        "WARN",
+                    )
+            except AttributeError:
+                log(
+                    "Note that the subject IDs have not yet been disambiguated. If you want to do so, run the `.disambiguate_subjects(<download-dir>)` method.",
+                    "WARN",
+                )
+
         return self._subjects
 
     @property
@@ -822,7 +872,9 @@ class Project(Utils):
         return fig
 
     @property
-    def flattened_annotations(self):
+    def annotations_flattened(
+        self, include_columns=["workflow_id", "workflow_version", "subject_ids"]
+    ) -> str:
         def extract_values(x):
             if isinstance(x, str):
                 try:
@@ -850,7 +902,7 @@ class Project(Utils):
                                         ",".join([str(x) for x in detail.get("value")])
                                     )
                             else:
-                                print("NONE")
+                                raise RuntimeError("A bug has occurred: NONE")
                     return "|".join([x for x in values if x])
                 else:
                     return "|".join([str(y) for y in x if y])
@@ -868,13 +920,127 @@ class Project(Utils):
             else:
                 raise RuntimeError("An error occurred interpreting", x)
 
-        task_columns = sorted(
-            [x for x in self.classifications.columns if TASK_COLUMN.search(x)]
+        if not isinstance(self._flattened, pd.DataFrame):
+            task_columns = sorted(
+                [x for x in self.classifications.columns if TASK_COLUMN.search(x)]
+            )
+
+            self._flattened = self.classifications[include_columns + task_columns]
+
+            for column in task_columns:
+                self._flattened[column] = self._flattened[column].apply(extract_values)
+
+        return self._flattened
+
+    def disambiguate_subjects(self, downloads_directory=None):
+        def get_all_files(directory):
+            """Walks through a directory and returns files. Could be done with pathlib.Path.rglob method but this is (surprisingly) a lot faster (525 ms vs 2.81 s)."""
+            all_files = {}
+
+            for root, dirs, files in os.walk(directory, topdown=False):
+                for name in files:
+                    if not name in all_files:
+                        all_files[name] = []
+
+                    all_files[name].append(root)
+
+            return all_files
+
+        def get_md5(path):
+            """From https://github.com/Living-with-machines/zooniverse-data-analysis/blob/main/identifying-double-files.ipynb"""
+            md5_hash = hashlib.md5()
+
+            with open(path, "rb") as f:
+                content = f.read()
+                md5_hash.update(content)
+
+                digest = md5_hash.hexdigest()
+
+            return digest
+
+        self.SUPPRESS_WARN = True
+        # Ensure we have loaded self._subjects
+        self.subjects
+        self.SUPPRESS_WARN = False
+
+        # Check if we can assume that this method has already been run:
+        if "subject_id_disambiguated" in self._subjects.columns:
+            return self._subjects
+
+        # Auto-setting for download_dir
+        if not downloads_directory:
+            downloads_directory = self.download_dir
+
+        # Test download_directory's existence and validity
+        if not isinstance(downloads_directory, str) or not os.path.exists(
+            downloads_directory
+        ):
+            raise RuntimeError("A required valid downloads directory was not provided.")
+
+        # Get all files from dowloads_directory
+        all_files = get_all_files(downloads_directory)
+
+        # Get hashes by file
+        hashes_by_file = {}
+        for filename, paths in tqdm(all_files.items()):
+            hashes_by_file[filename] = {
+                get_md5(os.path.join(path, filename)) for path in paths
+            }
+
+        # Test to ensure that there are not multiple files with same name but different hashes
+        if [x for x, y in hashes_by_file.items() if len(y) > 1]:
+            raise RuntimeError(
+                "Looks like there are files with the same name that are different from one another. This should not be the case with downloaded data from Zooniverse."
+            )
+
+        # Extract the unique hash
+        hashes_by_file = {x: list(y)[0] for x, y in hashes_by_file.items()}
+
+        # (Can be removed)
+        # hashes = list(hashes_by_file.values())
+        # doubles = [x for x in Counter(hashes).most_common() if x[1] > 1]
+
+        # Set up new columns to check for filenames + hashes across subjects
+        self._subjects["filenames"] = self._subjects.apply(
+            lambda row: [x.split("/")[-1] for x in row.locations.values()], axis=1
+        )
+        self._subjects["hashes"] = self._subjects.apply(
+            lambda row: str(sorted([hashes_by_file[x] for x in row.filenames])), axis=1
         )
 
-        flattened = self.classifications[["workflow_id", "subject_ids"] + task_columns]
+        # Set up a disambiguated column
+        self._subjects["subject_id_disambiguated"] = ""
 
-        for column in task_columns:
-            flattened[column] = flattened[column].apply(extract_values)
+        # Loop through hashes and set new index =
+        for _, rows in self._subjects.groupby("hashes"):
+            try:
+                subject_id_disambiguated += 1
+            except NameError:
+                subject_id_disambiguated = 1
+            for ix in list({ix for ix, row in rows.iterrows()}):
+                self._subjects["subject_id_disambiguated"][
+                    ix
+                ] = subject_id_disambiguated
 
-        return flattened
+        # Dropping unnecessary columns
+        self._subjects = self._subjects.drop(["filenames", "hashes"], axis=1)
+
+        # Reorganise so "subject_id_disambiguated" comes first of columns
+        self._subjects = self._subjects[
+            ["subject_id_disambiguated"]
+            + [x for x in self._subjects.columns if not x == "subject_id_disambiguated"]
+        ]
+
+        return self._subjects
+
+    def get_disambiguated_subject_id(self, subject_id):
+        if not "subject_id_disambiguated" in self.subjects.columns:
+            raise RuntimeError(
+                "The subjects need to be disambiguated using the `Project.disambiguate_subjects()` method."
+            )
+
+        try:
+            return self.subjects["subject_id_disambiguated"][subject_id]
+        except:
+            log(f"Subject {subject_id} wasn't in the subjects DataFrame.", "WARN")
+            return 0

@@ -15,10 +15,12 @@ About ``zoonyper``
    import
    load
    data-structure
+   downloading-subject-files
    participants
    agreement
    timelines
    comments
+   disambiguation-deduplication
 
 .. raw:: html
 
