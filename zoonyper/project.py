@@ -277,7 +277,12 @@ class Project(Utils):
         return list(self.subjects.query(f"workflow_id=={workflow_id}").index)
 
     def download_all_subjects(
-        self, download_dir=None, timeout=5, sleep=(2, 5), organize_by_workflow=True
+        self,
+        download_dir=None,
+        timeout=5,
+        sleep=(2, 5),
+        organize_by_workflow=True,
+        organize_by_subject_id=True,
     ) -> True:
         """Loops over all the unique workflow IDs and downloads the workflow from all of them."""
 
@@ -289,6 +294,7 @@ class Project(Utils):
                 timeout=timeout,
                 sleep=sleep,
                 organize_by_workflow=organize_by_workflow,
+                organize_by_subject_id=organize_by_subject_id,
             )
 
         return True
@@ -300,8 +306,31 @@ class Project(Utils):
         timeout=5,
         sleep=(2, 5),
         organize_by_workflow=True,
+        organize_by_subject_id=True,
     ):
         """TODO"""
+
+        def get_current_dir(organize_by_workflow, organize_by_subject_id):
+            if organize_by_workflow:
+                # print("Organize by workflow set to TRUE.")
+                if organize_by_subject_id:
+                    # print("Organize by subject_id set to TRUE.")
+                    return (
+                        Path(download_dir)
+                        / Path(str(workflow_id))
+                        / Path(str(subject_id))
+                    )
+                else:
+                    # print("Organize by subject_id set to FALSE.")
+                    return Path(download_dir) / Path(str(workflow_id))
+            else:
+                # print("Organize by workflow set to FALSE.")
+                if organize_by_subject_id:
+                    # print("Organize by subject_id set to TRUE.")
+                    return Path(download_dir) / Path(str(subject_id))
+                else:
+                    # print("Organize by subject_id set to FALSE.")
+                    return Path(download_dir)
 
         if not download_dir:
             download_dir = self.download_dir
@@ -316,23 +345,12 @@ class Project(Utils):
 
         # Setup all directories first
         for subject_id, urls in subjects_to_download.items():
-            if organize_by_workflow:
-                current_dir = (
-                    Path(download_dir) / Path(str(workflow_id)) / Path(str(subject_id))
-                )
-            else:
-                current_dir = Path(download_dir) / Path(str(subject_id))
-
+            current_dir = get_current_dir(organize_by_workflow, organize_by_subject_id)
             if not current_dir.exists():
                 current_dir.mkdir(parents=True)
 
         for subject_id, urls in tqdm(subjects_to_download.items()):
-            if organize_by_workflow:
-                current_dir = (
-                    Path(download_dir) / Path(str(workflow_id)) / Path(str(subject_id))
-                )
-            else:
-                current_dir = Path(download_dir) / Path(str(subject_id))
+            current_dir = get_current_dir(organize_by_workflow, organize_by_subject_id)
 
             has_downloaded = False
 
@@ -1034,13 +1052,29 @@ class Project(Utils):
         return self._subjects
 
     def get_disambiguated_subject_id(self, subject_id):
+        self.SUPPRESS_WARN = True  # Set warning suppression
+
+        # Ensure subjects is set up
+        self.subjects
+
         if not "subject_id_disambiguated" in self.subjects.columns:
+            self.SUPPRESS_WARN = False  # Reset warning suppression
             raise RuntimeError(
                 "The subjects need to be disambiguated using the `Project.disambiguate_subjects()` method."
             )
 
         try:
-            return self.subjects["subject_id_disambiguated"][subject_id]
-        except:
+            _ = self.subjects["subject_id_disambiguated"][subject_id]
+        except KeyError:
             log(f"Subject {subject_id} wasn't in the subjects DataFrame.", "WARN")
+            self.SUPPRESS_WARN = False  # Reset warning suppression
             return 0
+
+        if isinstance(_, int):
+            return _
+
+        if len(list({x for x in _})) == 1:
+            return [x for x in _][0]
+
+        self.SUPPRESS_WARN = False  # Reset warning suppression
+        return list({x for x in _})
