@@ -5,7 +5,7 @@ When in production, you can use PyPI to install zoonyper:
 
 .. code-block:: bash
 
-    $ pip install pandas
+    $ pip install zoonyper
 
 =================================
 In development
@@ -42,3 +42,19 @@ Now you should be able to use ``zoonyper`` as a regular package on your local co
 .. warning::
 
     If you change the source code (located in the ``zoonyper`` directory in the repository), you will need to rerun the ``poetry build`` and the ``pip install dis/zoonyper-0.1.0.tar.gz`` commands again.
+
+=================================
+Quick Install in Jupyter Notebook
+=================================
+
+If you are in a hurry and want to install the developer version in whichever Python kernel you're currently running in a Notebook, here's a handy bash script that you can copy and paste into a Jupyter notebook:
+
+.. code-block:: bash
+
+    %%bash
+    
+    curl -sSL https://install.python-poetry.org | python - &&
+    if [ ! -d "zoonyper" ] ; then git clone git@github.com:Living-with-machines/zoonyper.git; fi &&
+    cd zoonyper &&
+    poetry build &&
+    pip install dist/zoonyper-0.1.0.tar.gz
