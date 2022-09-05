@@ -9,7 +9,7 @@ from .log import log
 
 TASK_COLUMN = re.compile(r"^[T|t]\d{1,2}$")
 
-# Load correct progressbar
+# Load correct progressbar - TODO: I believe this is built into tqdm these days
 def in_ipynb():
     try:
         cfg = get_ipython().config
