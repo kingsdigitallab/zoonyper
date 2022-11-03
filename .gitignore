@@ -2,3 +2,6 @@
 _build
 .vscode
 *.ipynb
+.ipynb_checkpoints
+__pycache__
+tests/files/private
