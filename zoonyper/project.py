@@ -998,6 +998,9 @@ class Project(Utils):
         # Get all files from dowloads_directory
         all_files = get_all_files(downloads_directory)
 
+        if not len(all_files):
+            raise RuntimeError("Looks like download directory is empty.")
+
         # Get hashes by file
         hashes_by_file = {}
         for filename, paths in tqdm(all_files.items()):
