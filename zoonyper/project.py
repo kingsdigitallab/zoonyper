@@ -1,14 +1,12 @@
 from collections import ChainMap, Counter
 from pathlib import Path
-from attr import Attribute
-from numpy import True_
+
 import pandas as pd
 
 import hashlib
 import json
 import os
 import random
-import re
 import requests
 import time
 
@@ -45,12 +43,12 @@ class Project(Utils):
 
     def __init__(
         self,
-        path: str = None,
-        classifications_path: str = None,
-        subjects_path: str = None,
-        workflows_path: str = None,
-        comments_path: str = None,
-        tags_path: str = None,
+        path: str = "",
+        classifications_path: str = "",
+        subjects_path: str = "",
+        workflows_path: str = "",
+        comments_path: str = "",
+        tags_path: str = "",
         redact_users: bool = True,
         trim_paths: bool = True,
         parse_dates: str = "%Y-%m-%d",
@@ -259,16 +257,16 @@ class Project(Utils):
 
         return self._subject_sets
 
-    @property
-    def subject_urls(self):
-        """TODO"""
+    # @property
+    # def subject_urls(self):
+    #     """OVERWRITTEN BELOW"""
 
-        if not self._subject_urls:
-            self._subject_urls = {
-                ix: list(x.locations.values()) for ix, x in self.subjects.iterrows()
-            }
+    #     if not self._subject_urls:
+    #         self._subject_urls = {
+    #             ix: list(x.locations.values()) for ix, x in self.subjects.iterrows()
+    #         }
 
-        return self._subject_urls
+    #     return self._subject_urls
 
     def workflow_subjects(self, workflow_id=None):
         if not isinstance(workflow_id, int):
@@ -995,39 +993,53 @@ class Project(Utils):
         ):
             raise RuntimeError("A required valid downloads directory was not provided.")
 
-        # Get all files from dowloads_directory
-        all_files = get_all_files(downloads_directory)
-
-        if not len(all_files):
-            raise RuntimeError("Looks like download directory is empty.")
-
         # Get hashes by file
-        hashes_by_file = {}
-        for filename, paths in tqdm(all_files.items()):
-            hashes_by_file[filename] = {
-                get_md5(os.path.join(path, filename)) for path in paths
-            }
+        def get_hashes_by_file():
+            # Get all files from dowloads_directory
+            all_files = get_all_files(downloads_directory)
 
-        # Test to ensure that there are not multiple files with same name but different hashes
-        if [x for x, y in hashes_by_file.items() if len(y) > 1]:
-            raise RuntimeError(
-                "Looks like there are files with the same name that are different from one another. This should not be the case with downloaded data from Zooniverse."
-            )
+            if not len(all_files):
+                raise RuntimeError("Looks like download directory is empty.")
 
-        # Extract the unique hash
-        hashes_by_file = {x: list(y)[0] for x, y in hashes_by_file.items()}
+            hashes_by_file = {}
+            for filename, paths in tqdm(all_files.items()):
+                hashes_by_file[filename] = {
+                    get_md5(os.path.join(path, filename)) for path in paths
+                }
 
-        # (Can be removed)
-        # hashes = list(hashes_by_file.values())
-        # doubles = [x for x in Counter(hashes).most_common() if x[1] > 1]
+            # Test to ensure that there are not multiple files with same name but different hashes
+            if [x for x, y in hashes_by_file.items() if len(y) > 1]:
+                raise RuntimeError(
+                    "Looks like there are files with the same name that are different from one another. This should not be the case with downloaded data from Zooniverse."
+                )
+
+            # Extract the unique hash
+            hashes_by_file = {x: list(y)[0] for x, y in hashes_by_file.items()}
+
+            # (Can be removed)
+            # hashes = list(hashes_by_file.values())
+            # doubles = [x for x in Counter(hashes).most_common() if x[1] > 1]
+
+            return hashes_by_file
+
+        self.hashes_by_file = get_hashes_by_file()
 
         # Set up new columns to check for filenames + hashes across subjects
         self._subjects["filenames"] = self._subjects.apply(
             lambda row: [x.split("/")[-1] for x in row.locations.values()], axis=1
         )
-        self._subjects["hashes"] = self._subjects.apply(
-            lambda row: str(sorted([hashes_by_file[x] for x in row.filenames])), axis=1
-        )
+        try:
+            self._subjects["hashes"] = self._subjects.apply(
+                lambda row: str(
+                    sorted([self.hashes_by_file[x] for x in row.filenames])
+                ),
+                axis=1,
+            )
+        except KeyError as file:
+            raise RuntimeError(
+                "Looks like not all subjects have been properly downloaded yet. Try running .download_all_subjects() with the correct download directory set. The missing file was: "
+                + str(file)
+            )
 
         # Set up a disambiguated column
         self._subjects["subject_id_disambiguated"] = ""
@@ -1081,3 +1093,74 @@ class Project(Utils):
 
         self.SUPPRESS_WARN = False  # Reset warning suppression
         return list({x for x in _})
+
+    @property
+    def subject_urls(self):
+        if not self._subject_urls:
+            # Ensure subjects is set up
+            self.subjects
+
+            self._subject_urls = [
+                y
+                for x in self.subjects.locations.apply(lambda x: x.values())
+                for y in x
+            ]
+
+        return self._subject_urls
+
+    def get_subject_paths(
+        self,
+        downloads_directory=None,
+        organize_by_workflow=True,
+        organize_by_subject_id=True,
+    ):
+        def get_locations(
+            row,
+            downloads_directory="",
+            organize_by_workflow=True,
+            organize_by_subject_id=True,
+        ):
+            paths = []
+
+            if all([not organize_by_workflow, not organize_by_subject_id]):
+                # none of organize_by_workflow or organize_by_subject_id are true
+                paths = [row.locations[x].split("/")[-1] for x in row.locations]
+            elif all([organize_by_workflow, organize_by_subject_id]):
+                # both of organize_by_workflow or organize_by_subject_id are true
+                paths = [
+                    f"{row.workflow_id}/{row.name}/{row.locations[x].split('/')[-1]}"
+                    for x in row.locations
+                ]
+            elif organize_by_workflow:
+                # organize_by_workflow is true
+                paths = [
+                    f"{row.workflow_id}/{row.locations[x].split('/')[-1]}"
+                    for x in row.locations
+                ]
+            elif organize_by_subject_id:
+                # organize_by_subject_id is true
+                paths = [
+                    f"{row.name}/{row.locations[x].split('/')[-1]}"
+                    for x in row.locations
+                ]
+            else:
+                raise RuntimeError("An unknown error occurred in get_locations.")
+
+            return [Path(downloads_directory) / x for x in paths]
+
+        if not downloads_directory:
+            downloads_directory = self.download_dir
+
+        return [
+            y
+            for x in self.subjects.apply(
+                lambda row: get_locations(
+                    row,
+                    downloads_directory=downloads_directory,
+                    organize_by_workflow=organize_by_workflow,
+                    organize_by_subject_id=organize_by_subject_id,
+                ),
+                axis=1,
+            )
+            for y in x
+        ]
