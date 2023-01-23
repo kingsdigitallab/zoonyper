@@ -1,5 +1,6 @@
 from collections import ChainMap, Counter
 from pathlib import Path
+from tqdm import tqdm
 
 import pandas as pd
 
@@ -10,11 +11,14 @@ import random
 import requests
 import time
 
-from .utils import Utils, TASK_COLUMN, tqdm
+from .utils import Utils, TASK_COLUMN, get_current_dir
 from .log import log
 
 
-# TODO: this is not elegant but here we are - to save `flattened[column]` assignment below
+"""
+TODO: this is not elegant but here we are - to save `flattened[column]`
+assignment below
+"""
 pd.options.mode.chained_assignment = None
 
 
@@ -54,18 +58,33 @@ class Project(Utils):
         parse_dates: str = "%Y-%m-%d",
     ):
         """
-        You can either pass `path` as a directory that contains all five required files, or a combination
-        of all five individual files (`classifications_path`, `subjects_path`, `workflows_path`,
-        `comments_path`, `tags_path`.
+        You can either pass `path` as a directory that contains all five
+        required files, or a combination of all five individual files
+        (`classifications_path`, `subjects_path`, `workflows_path`,
+        `comments_path`, `tags_path`).
 
-        path: general path to directory that contains all five required files.
-        classifications_path: path to classifications CSV file
-        subjects_path: path to subjects CSV file
-        workflows_path: path to workflows CSV file
-        comments_path: string describing path to JSON file for project comments.
-        tags_path: string describing path to JSON file for project tags.
-        redact_users: boolean describing whether to obscure user names in the classifications table.
-        trim_paths: boolean describing whether to trim paths in columns that we know contain paths
+        :param path: general path to directory that contains all five required
+            files
+        :type path: str
+        :param classifications_path: path to classifications CSV file,
+            optional but must be provided if no general ``path`` provided
+        :type classifications_path: str
+        :param subjects_path: path to subjects CSV file, optional but must be
+            provided if no general ``path`` provided
+        :type subjects_path: str
+        :param workflows_path: path to workflows CSV file, optional but must
+            be provided if no general ``path`` provided
+        :type workflows_path: str
+        :param comments_path: path to JSON file for project comments, optional
+            but must be provided if no general ``path`` provided
+        :type comments_path: str
+        :param tags_path: path to JSON file for project tags, optional but
+            must be provided if no general ``path`` provided
+        :type tags_path: str
+        :param redact_users: boolean describing whether to obscure user names
+            in the classifications table.
+        :param trim_paths: boolean describing whether to trim paths in columns
+            that we know contain paths.
         """
 
         # Ensure that correct paths are set up
@@ -82,7 +101,8 @@ class Project(Utils):
             and not path
         ):
             raise RuntimeError(
-                "Either paths for each file or a general path argument which contains all necessary files must be provided."
+                "Either paths for each file or a general path argument which \
+                contains all necessary files must be provided."
             )
 
         # Test that all files are present and exist
@@ -112,7 +132,9 @@ class Project(Utils):
                 ]
             ):
                 raise RuntimeError(
-                    "If a general path is provided, it must contain five files: classifications.csv, subjects.csv, workflows.csv, comments.json, and tags.json"
+                    "If a general path is provided, it must contain five files: \
+                    classifications.csv, subjects.csv, workflows.csv, \
+                    comments.json, and tags.json"
                 )
 
         self.classifications_path = Path(classifications_path)
@@ -132,8 +154,9 @@ class Project(Utils):
     @staticmethod
     def _extract_annotation_values(annotation_row):
         """
-        Takes an annotation row, which contains a list of tasks with values in dictionary {task, task_label, value}
-        and extracts the `value` for each `task`, disregarding the `task_label` and returns them as a dictionary,
+        Takes an annotation row, which contains a list of tasks with values in
+        dictionary {task, task_label, value} and extracts the `value` for each
+        `task`, disregarding the `task_label` and returns them as a dictionary,
         for easy insertion into a DataFrame.
         """
 
@@ -150,19 +173,23 @@ class Project(Utils):
         if workflow_id:
             results = [
                 len({x for x in rows.user_name})
-                for _workflow_id, rows in self.classifications.groupby("workflow_id")
+                for _workflow_id, rows in self.classifications.groupby(
+                    "workflow_id"
+                )
                 if _workflow_id == workflow_id
             ]
             if len(results) == 1:
                 return results[0]
             else:
                 raise RuntimeError(
-                    f"No participants recorded for workflow with ID {workflow_id}"
+                    f"No participants recorded for workflow {workflow_id}"
                 )
 
         result = {
             workflow_id: len({x for x in rows.user_name})
-            for workflow_id, rows in self.classifications.groupby("workflow_id")
+            for workflow_id, rows in self.classifications.groupby(
+                "workflow_id"
+            )
         }
 
         result["total"] = len({x for x in self.classifications.user_name})
@@ -175,19 +202,23 @@ class Project(Utils):
         if workflow_id:
             results = [
                 len([x for x in rows.user_logged_in if x])
-                for _workflow_id, rows in self.classifications.groupby("workflow_id")
+                for _workflow_id, rows in self.classifications.groupby(
+                    "workflow_id"
+                )
                 if _workflow_id == workflow_id
             ]
             if len(results) == 1:
                 return results[0]
             else:
                 raise RuntimeError(
-                    f"No participants recorded for workflow with ID {workflow_id}"
+                    f"No participants recorded for workflow {workflow_id}"
                 )
 
         result = {
             workflow_id: len([x for x in rows.user_logged_in if x])
-            for workflow_id, rows in self.classifications.groupby("workflow_id")
+            for workflow_id, rows in self.classifications.groupby(
+                "workflow_id"
+            )
         }
 
         result["total"] = len({x for x in self.classifications.user_logged_in})
@@ -200,9 +231,11 @@ class Project(Utils):
         results = self.classifications.query(f"workflow_id=={workflow_id}")
 
         resulting_classifications = {}
-        for subject_ids, rows in results.groupby(
-            "subject_ids"
-        ):  # TODO: #3 [testing] What happens if subject_ids contains multiple IDs here?
+        """
+        TODO: #3 [testing] What happens below if subject_ids contains multiple
+            IDs?
+        """
+        for subject_ids, rows in results.groupby("subject_ids"):
             all_results = [str(x) for x in rows[f"T{task_number}"]]
             count_results = Counter(all_results)
             resulting_classifications[subject_ids] = dict(count_results)
@@ -215,9 +248,15 @@ class Project(Utils):
         if not self._participants:
             self._participants = {
                 workflow_id: list(
-                    {name for name in rows.user_name if not "not-logged-in" in name}
+                    {
+                        name
+                        for name in rows.user_name
+                        if "not-logged-in" not in name
+                    }
                 )
-                for workflow_id, rows in self.classifications.groupby("workflow_id")
+                for workflow_id, rows in self.classifications.groupby(
+                    "workflow_id"
+                )
             }
 
         if not workflow_id and by_workflow:
@@ -252,21 +291,12 @@ class Project(Utils):
         if not self._subject_sets:
             self._subject_sets = {
                 subject_set_id: list({x for x in rows.index})
-                for subject_set_id, rows in self.subjects.groupby("subject_set_id")
+                for subject_set_id, rows in self.subjects.groupby(
+                    "subject_set_id"
+                )
             }
 
         return self._subject_sets
-
-    # @property
-    # def subject_urls(self):
-    #     """OVERWRITTEN BELOW"""
-
-    #     if not self._subject_urls:
-    #         self._subject_urls = {
-    #             ix: list(x.locations.values()) for ix, x in self.subjects.iterrows()
-    #         }
-
-    #     return self._subject_urls
 
     def workflow_subjects(self, workflow_id=None):
         if not isinstance(workflow_id, int):
@@ -282,7 +312,10 @@ class Project(Utils):
         organize_by_workflow=True,
         organize_by_subject_id=True,
     ) -> True:
-        """Loops over all the unique workflow IDs and downloads the workflow from all of them."""
+        """
+        Loops over all the unique workflow IDs and downloads the workflow
+        from all of them.
+        """
 
         for workflow in self.workflow_ids:
             log(f"Downloading workflow {workflow}", "INFO")
@@ -308,28 +341,6 @@ class Project(Utils):
     ):
         """TODO"""
 
-        def get_current_dir(organize_by_workflow, organize_by_subject_id):
-            if organize_by_workflow:
-                # print("Organize by workflow set to TRUE.")
-                if organize_by_subject_id:
-                    # print("Organize by subject_id set to TRUE.")
-                    return (
-                        Path(download_dir)
-                        / Path(str(workflow_id))
-                        / Path(str(subject_id))
-                    )
-                else:
-                    # print("Organize by subject_id set to FALSE.")
-                    return Path(download_dir) / Path(str(workflow_id))
-            else:
-                # print("Organize by workflow set to FALSE.")
-                if organize_by_subject_id:
-                    # print("Organize by subject_id set to TRUE.")
-                    return Path(download_dir) / Path(str(subject_id))
-                else:
-                    # print("Organize by subject_id set to FALSE.")
-                    return Path(download_dir)
-
         if not download_dir:
             download_dir = self.download_dir
 
@@ -343,12 +354,24 @@ class Project(Utils):
 
         # Setup all directories first
         for subject_id, urls in subjects_to_download.items():
-            current_dir = get_current_dir(organize_by_workflow, organize_by_subject_id)
+            current_dir = get_current_dir(
+                download_dir,
+                organize_by_workflow,
+                organize_by_subject_id,
+                workflow_id,
+                subject_id,
+            )
             if not current_dir.exists():
                 current_dir.mkdir(parents=True)
 
         for subject_id, urls in tqdm(subjects_to_download.items()):
-            current_dir = get_current_dir(organize_by_workflow, organize_by_subject_id)
+            current_dir = get_current_dir(
+                download_dir,
+                organize_by_workflow,
+                organize_by_subject_id,
+                workflow_id,
+                subject_id,
+            )
 
             has_downloaded = False
 
@@ -422,16 +445,23 @@ class Project(Utils):
         if not include_staff:
             if not self.staff:
                 log(
-                    "Staff is not set, so `include_staff` set to False has no effects. Use .set_staff method to enable this feature.",
+                    "Staff is not set, so `include_staff` set to False has no \
+                    effects. Use .set_staff method to enable this feature.",
                     "WARN",
                 )
-            query = "user_login != '" + "' & user_login != '".join(self.staff) + "'"
+            query = (
+                "user_login != '"
+                + "' & user_login != '".join(self.staff)
+                + "'"
+            )
             return self.comments.query(query)
         return self.comments
 
     def get_subject_comments(self, subject_id):
         """TODO"""
-        return self.comments.query(f"focus_type=='Subject' & focus_id=={subject_id}")
+        return self.comments.query(
+            f"focus_type=='Subject' & focus_id=={subject_id}"
+        )
 
     def set_staff(self, staff):
         self.staff = staff
@@ -443,7 +473,7 @@ class Project(Utils):
             self._raw_frames = {}
 
         if name == "classifications":
-            if not "classifications" in self._raw_frames or pd.isna(
+            if "classifications" not in self._raw_frames or pd.isna(
                 self._raw_frames.get("classifications")
             ):
                 classifications = pd.read_csv(self.classifications_path)
@@ -460,13 +490,13 @@ class Project(Utils):
                         "created_at": "date",
                     },
                 )
-                classifications["user_logged_in"] = classifications.user_name.apply(
-                    self._user_logged_in
-                )
+                classifications[
+                    "user_logged_in"
+                ] = classifications.user_name.apply(self._user_logged_in)
 
                 if self.redact_users:
-                    classifications.user_name = classifications.user_name.apply(
-                        self.redact_username
+                    classifications.user_name = (
+                        classifications.user_name.apply(self.redact_username)
                     )
                     self._redacted = {}
 
@@ -475,7 +505,7 @@ class Project(Utils):
             return self._raw_frames["classifications"]
 
         if name == "subjects":
-            if not "subjects" in self._raw_frames or pd.isna(
+            if "subjects" not in self._raw_frames or pd.isna(
                 self._raw_frames.get("subjects")
             ):
                 subjects = pd.read_csv(self.subjects_path)
@@ -489,7 +519,9 @@ class Project(Utils):
 
                 # Fill empties
                 subjects.retired_at = subjects.retired_at.fillna(False)
-                subjects.retirement_reason = subjects.retirement_reason.fillna("")
+                subjects.retirement_reason = subjects.retirement_reason.fillna(
+                    ""
+                )
 
                 # Fix subjects' types
                 subjects = self._fix_columns(
@@ -508,7 +540,7 @@ class Project(Utils):
             return self._raw_frames["subjects"]
 
         if name == "workflows":
-            if not "workflows" in self._raw_frames or pd.isna(
+            if "workflows" not in self._raw_frames or pd.isna(
                 self._raw_frames.get("workflows")
             ):
                 workflows = pd.read_csv(self.workflows_path)
@@ -516,14 +548,16 @@ class Project(Utils):
 
                 # Fill empties
                 workflows.first_task = workflows.first_task.fillna("")
-                workflows.tutorial_subject_id = workflows.tutorial_subject_id.fillna("")
+                workflows.tutorial_subject_id = (
+                    workflows.tutorial_subject_id.fillna("")
+                )
 
                 self._raw_frames["workflows"] = workflows
 
             return self._raw_frames["workflows"]
 
         if name == "comments":
-            if not "comments" in self._raw_frames or pd.isna(
+            if "comments" not in self._raw_frames or pd.isna(
                 self._raw_frames.get("comments")
             ):
                 comments = pd.read_json(self.comments_path)
@@ -545,7 +579,9 @@ class Project(Utils):
             return self._raw_frames["comments"]
 
         if name == "tags":
-            if not "tags" in self._raw_frames or pd.isna(self._raw_frames.get("tags")):
+            if "tags" not in self._raw_frames or pd.isna(
+                self._raw_frames.get("tags")
+            ):
                 tags = pd.read_json(self.tags_path)
                 tags.set_index("id", inplace=True)
 
@@ -581,7 +617,10 @@ class Project(Utils):
         ):
             log("Loading all frames...", "None")
 
-            log(f"--> [classifications] {self.classifications_path.name}", "None")
+            log(
+                f"--> [classifications] {self.classifications_path.name}",
+                "None",
+            )
             self.load_frame("classifications")
 
             log(f"--> [subjects] {self.subjects_path.name}", "None")
@@ -667,7 +706,8 @@ class Project(Utils):
 
             # Drop duplicate information from tags frame
             self._tags = self._tags.drop(
-                ["user_id_comment", "user_id_comment", "created_at_comment"], axis=1
+                ["user_id_comment", "user_id_comment", "created_at_comment"],
+                axis=1,
             )
 
             # Final preprocessing
@@ -754,24 +794,32 @@ class Project(Utils):
             try:
                 if not self.SUPPRESS_WARN:
                     log(
-                        "Note that the subject IDs have been disambiguated and the information can be found in the `subject_id_disambiguated` column.",
+                        "Note that the subject IDs have been disambiguated \
+                        and the information can be found in the \
+                        `subject_id_disambiguated` column.",
                         "INFO",
                     )
             except AttributeError:
                 log(
-                    "Note that the subject IDs have been disambiguated and the information can be found in the `subject_id_disambiguated` column.",
+                    "Note that the subject IDs have been disambiguated and \
+                    the information can be found in the \
+                    `subject_id_disambiguated` column.",
                     "INFO",
                 )
         else:
             try:
                 if not self.SUPPRESS_WARN:
                     log(
-                        "Note that the subject IDs have not yet been disambiguated. If you want to do so, run the `.disambiguate_subjects(<download-dir>)` method.",
+                        "Note that the subject IDs have not yet been \
+                        disambiguated. If you want to do so, run the \
+                        `.disambiguate_subjects(<download-dir>)` method.",
                         "WARN",
                     )
             except AttributeError:
                 log(
-                    "Note that the subject IDs have not yet been disambiguated. If you want to do so, run the `.disambiguate_subjects(<download-dir>)` method.",
+                    "Note that the subject IDs have not yet been \
+                    disambiguated. If you want to do so, run the \
+                    `.disambiguate_subjects(<download-dir>)` method.",
                     "WARN",
                 )
 
@@ -787,8 +835,12 @@ class Project(Utils):
             self._classifications = self.load_frame("classifications")
 
             # Set up classifications' metadata
-            classification_metadata = pd.json_normalize(self._classifications.metadata)
-            classification_metadata.set_index(self._classifications.index, inplace=True)
+            classification_metadata = pd.json_normalize(
+                self._classifications.metadata
+            )
+            classification_metadata.set_index(
+                self._classifications.index, inplace=True
+            )
             classification_metadata = classification_metadata.fillna("")
 
             # Add new classifications' columns
@@ -802,11 +854,15 @@ class Project(Utils):
             )
 
             # Join classifications and metadata back together
-            self._classifications = self._classifications.join(classification_metadata)
+            self._classifications = self._classifications.join(
+                classification_metadata
+            )
 
             # Set up classifications' annotations
-            self._classifications.annotations = self._classifications.annotations.apply(
-                self._extract_annotation_values
+            self._classifications.annotations = (
+                self._classifications.annotations.apply(
+                    self._extract_annotation_values
+                )
             )
             annotations = pd.json_normalize(self._classifications.annotations)
             annotations.set_index(self._classifications.index, inplace=True)
@@ -814,7 +870,9 @@ class Project(Utils):
             # Extract all single list values as single values instead
             for col in annotations.columns:
                 annotations[col] = annotations[col].apply(
-                    lambda x: x[0] if isinstance(x, list) and len(x) == 1 else x
+                    lambda x: x[0]
+                    if isinstance(x, list) and len(x) == 1
+                    else x
                 )
                 annotations[col] = annotations[col].apply(
                     lambda x: "" if isinstance(x, list) and len(x) == 0 else x
@@ -826,15 +884,25 @@ class Project(Utils):
             self._classifications = self._classifications.join(annotations)
 
             for col in ["user_name", "user_ip", "session"]:
-                self._classifications = self._max_short_col(self._classifications, col)
+                self._classifications = self._max_short_col(
+                    self._classifications, col
+                )
 
             self._classifications = self._classifications.drop(
-                ["metadata", "annotations", "workflow_name", "subject_data", "user_id"],
+                [
+                    "metadata",
+                    "annotations",
+                    "workflow_name",
+                    "subject_data",
+                    "user_id",
+                ],
                 axis=1,
             )
 
             # Final preprocessing
-            self._classifications = self._preprocess(self._classifications, date_cols)
+            self._classifications = self._preprocess(
+                self._classifications, date_cols
+            )
 
         return self._classifications
 
@@ -844,9 +912,13 @@ class Project(Utils):
         if not workflow_id:
             subframe = self.classifications
         else:
-            subframe = self.classifications.query(f"workflow_id=={workflow_id}")
+            subframe = self.classifications.query(
+                f"workflow_id=={workflow_id}"
+            )
 
-        values = {date: len(rows) for date, rows in subframe.groupby("created_at")}
+        values = {
+            date: len(rows) for date, rows in subframe.groupby("created_at")
+        }
 
         if list(values.keys()):
             lst = []
@@ -872,7 +944,9 @@ class Project(Utils):
 
         workflows = {id for id, _ in self.workflows.iterrows()}
         dct = {
-            workflow_id: self.get_classifications_for_workflow_by_dates(workflow_id)
+            workflow_id: self.get_classifications_for_workflow_by_dates(
+                workflow_id
+            )
             for workflow_id in workflows
         }
         dct["All workflows"] = self.get_classifications_for_workflow_by_dates()
@@ -880,7 +954,9 @@ class Project(Utils):
         return dct
 
     def plot_classifications(self, workflow_id=None, width=15, height=5):
-        df = pd.DataFrame(self.get_classifications_for_workflow_by_dates(workflow_id))
+        df = pd.DataFrame(
+            self.get_classifications_for_workflow_by_dates(workflow_id)
+        )
         df.date = pd.to_datetime(df.date)
         df = df.set_index("date")
         ax = df.plot(figsize=(width, height))
@@ -889,13 +965,14 @@ class Project(Utils):
 
     @property
     def annotations_flattened(
-        self, include_columns=["workflow_id", "workflow_version", "subject_ids"]
+        self,
+        include_columns=["workflow_id", "workflow_version", "subject_ids"],
     ) -> str:
         def extract_values(x):
             if isinstance(x, str):
                 try:
                     x = json.loads(x)
-                except:
+                except:  # TODO: replace bare except clause
                     return x
 
             if isinstance(x, list):
@@ -904,9 +981,9 @@ class Project(Utils):
                     for _dict in x:
                         for detail in _dict.get("details"):
 
-                            if isinstance(detail.get("value"), str) or isinstance(
-                                detail.get("value"), int
-                            ):
+                            if isinstance(
+                                detail.get("value"), str
+                            ) or isinstance(detail.get("value"), int):
                                 values.append(str(detail.get("value")))
                             elif not detail.get("value"):
                                 return ""
@@ -915,7 +992,12 @@ class Project(Utils):
                                     values.append(str(detail.get("value")))
                                 else:
                                     values.append(
-                                        ",".join([str(x) for x in detail.get("value")])
+                                        ",".join(
+                                            [
+                                                str(x)
+                                                for x in detail.get("value")
+                                            ]
+                                        )
                                     )
                             else:
                                 raise RuntimeError("A bug has occurred: NONE")
@@ -938,24 +1020,37 @@ class Project(Utils):
 
         if not isinstance(self._flattened, pd.DataFrame):
             task_columns = sorted(
-                [x for x in self.classifications.columns if TASK_COLUMN.search(x)]
+                [
+                    x
+                    for x in self.classifications.columns
+                    if TASK_COLUMN.search(x)
+                ]
             )
 
-            self._flattened = self.classifications[include_columns + task_columns]
+            self._flattened = self.classifications[
+                include_columns + task_columns
+            ]
 
             for column in task_columns:
-                self._flattened[column] = self._flattened[column].apply(extract_values)
+                self._flattened[column] = self._flattened[column].apply(
+                    extract_values
+                )
 
         return self._flattened
 
     def disambiguate_subjects(self, downloads_directory=None):
         def get_all_files(directory):
-            """Walks through a directory and returns files. Could be done with pathlib.Path.rglob method but this is (surprisingly) a lot faster (525 ms vs 2.81 s)."""
+            """
+            Walks through a directory and returns files. Could be done with
+            pathlib.Path.rglob method but this is (surprisingly) a lot faster
+            (525 ms vs 2.81 s).
+            """
+
             all_files = {}
 
-            for root, dirs, files in os.walk(directory, topdown=False):
+            for root, _, files in os.walk(directory, topdown=False):
                 for name in files:
-                    if not name in all_files:
+                    if name not in all_files:
                         all_files[name] = []
 
                     all_files[name].append(root)
@@ -963,7 +1058,10 @@ class Project(Utils):
             return all_files
 
         def get_md5(path):
-            """From https://github.com/Living-with-machines/zooniverse-data-analysis/blob/main/identifying-double-files.ipynb"""
+            """
+            From https://github.com/Living-with-machines/zooniverse-data-analysis/blob/main/identifying-double-files.ipynb
+            """
+
             md5_hash = hashlib.md5()
 
             with open(path, "rb") as f:
@@ -991,7 +1089,9 @@ class Project(Utils):
         if not isinstance(downloads_directory, str) or not os.path.exists(
             downloads_directory
         ):
-            raise RuntimeError("A required valid downloads directory was not provided.")
+            raise RuntimeError(
+                "A required valid downloads directory was not provided."
+            )
 
         # Get hashes by file
         def get_hashes_by_file():
@@ -1010,7 +1110,9 @@ class Project(Utils):
             # Test to ensure that there are not multiple files with same name but different hashes
             if [x for x, y in hashes_by_file.items() if len(y) > 1]:
                 raise RuntimeError(
-                    "Looks like there are files with the same name that are different from one another. This should not be the case with downloaded data from Zooniverse."
+                    "Looks like there are files with the same name that are \
+                    different from one another. This should not be the case \
+                    with downloaded data from Zooniverse."
                 )
 
             # Extract the unique hash
@@ -1026,7 +1128,8 @@ class Project(Utils):
 
         # Set up new columns to check for filenames + hashes across subjects
         self._subjects["filenames"] = self._subjects.apply(
-            lambda row: [x.split("/")[-1] for x in row.locations.values()], axis=1
+            lambda row: [x.split("/")[-1] for x in row.locations.values()],
+            axis=1,
         )
         try:
             self._subjects["hashes"] = self._subjects.apply(
@@ -1037,8 +1140,9 @@ class Project(Utils):
             )
         except KeyError as file:
             raise RuntimeError(
-                "Looks like not all subjects have been properly downloaded yet. Try running .download_all_subjects() with the correct download directory set. The missing file was: "
-                + str(file)
+                f"Looks like not all subjects have been properly downloaded \
+                yet. Try running .download_all_subjects() with the correct \
+                download directory set. The missing file was: {file}"
             )
 
         # Set up a disambiguated column
@@ -1061,7 +1165,11 @@ class Project(Utils):
         # Reorganise so "subject_id_disambiguated" comes first of columns
         self._subjects = self._subjects[
             ["subject_id_disambiguated"]
-            + [x for x in self._subjects.columns if not x == "subject_id_disambiguated"]
+            + [
+                x
+                for x in self._subjects.columns
+                if not x == "subject_id_disambiguated"
+            ]
         ]
 
         return self._subjects
@@ -1075,13 +1183,17 @@ class Project(Utils):
         if not "subject_id_disambiguated" in self.subjects.columns:
             self.SUPPRESS_WARN = False  # Reset warning suppression
             raise RuntimeError(
-                "The subjects need to be disambiguated using the `Project.disambiguate_subjects()` method."
+                "The subjects need to be disambiguated using the \
+                `Project.disambiguate_subjects()` method."
             )
 
         try:
             _ = self.subjects["subject_id_disambiguated"][subject_id]
         except KeyError:
-            log(f"Subject {subject_id} wasn't in the subjects DataFrame.", "WARN")
+            log(
+                f"Subject {subject_id} was not in the subjects DataFrame.",
+                "WARN",
+            )
             self.SUPPRESS_WARN = False  # Reset warning suppression
             return 0
 
@@ -1123,28 +1235,34 @@ class Project(Utils):
             paths = []
 
             if all([not organize_by_workflow, not organize_by_subject_id]):
-                # none of organize_by_workflow or organize_by_subject_id are true
-                paths = [row.locations[x].split("/")[-1] for x in row.locations]
-            elif all([organize_by_workflow, organize_by_subject_id]):
-                # both of organize_by_workflow or organize_by_subject_id are true
+                # none of organize_by_workflow or organize_by_subject_id are
+                # True
                 paths = [
-                    f"{row.workflow_id}/{row.name}/{row.locations[x].split('/')[-1]}"
+                    row.locations[x].split("/")[-1] for x in row.locations
+                ]
+            elif all([organize_by_workflow, organize_by_subject_id]):
+                # both of organize_by_workflow or organize_by_subject_id are
+                # True
+                paths = [
+                    f"{row.workflow_id}/{row.name}/{row.locations[x].split('/')[-1]}"  # noqa
                     for x in row.locations
                 ]
             elif organize_by_workflow:
-                # organize_by_workflow is true
+                # organize_by_workflow is True
                 paths = [
                     f"{row.workflow_id}/{row.locations[x].split('/')[-1]}"
                     for x in row.locations
                 ]
             elif organize_by_subject_id:
-                # organize_by_subject_id is true
+                # organize_by_subject_id is True
                 paths = [
                     f"{row.name}/{row.locations[x].split('/')[-1]}"
                     for x in row.locations
                 ]
             else:
-                raise RuntimeError("An unknown error occurred in get_locations.")
+                raise RuntimeError(
+                    "An unknown error occurred in get_locations."
+                )
 
             return [Path(downloads_directory) / x for x in paths]
 

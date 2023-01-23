@@ -1,4 +1,7 @@
 from pathlib import Path
+from typing import Optional
+from tqdm import tqdm
+
 import pandas as pd
 import hashlib
 import json
@@ -9,7 +12,7 @@ from .log import log
 
 TASK_COLUMN = re.compile(r"^[T|t]\d{1,2}$")
 
-# Load correct progressbar - TODO: I believe this is built into tqdm these days
+
 def in_ipynb():
     try:
         cfg = get_ipython().config
@@ -27,35 +30,32 @@ if in_ipynb():
         import widgetsnbextension
     except ModuleNotFoundError:
         raise RuntimeError(
-            "One or more of the required packages (ipywidgets widgetsnbextension) do not appear to be installed. Run `pip install ipywidgets widgetsnbextension` to ensure all requirements are installed."
+            "One or more of the required packages (ipywidgets\
+            widgetsnbextension) do not appear to be installed. Run \
+            `pip install ipywidgets widgetsnbextension` to ensure all \
+            requirements are installed."
         )
-
-    from tqdm import tqdm
-
-    # from tqdm.notebook import tqdm_notebook as tqdm
-    # log("loaded tqdm from tqdm.notebook", "INFO")
-else:
-    from tqdm import tqdm
-
-    # log("loaded tqdm", "INFO")
 
 
 class Utils:
     """TODO"""
 
-    MAX_SIZE_OBSERVABLE = 50000000  # 50 MB is the max size for files on Observable
+    MAX_SIZE_OBSERVABLE = (
+        50000000  # 50 MB is the max size for files on Observable
+    )
 
     _redacted = {}
 
-    def redact_username(self, row: str) -> str:
+    def redact_username(self, row: str) -> Optional[str]:
         """
-        Returns a sha256 encoded string for any given string (and caches to speed up).
+        Returns a sha256 encoded string for any given string (and caches to
+        speed up).
         """
 
         if pd.isna(row):
             return None
 
-        if not row in self._redacted:
+        if row not in self._redacted:
             self._redacted[row] = hashlib.sha256(str(row).encode()).hexdigest()
 
         return self._redacted[row]
@@ -68,6 +68,7 @@ class Utils:
     def camel_case(s):
         """Making any string into a CamelCase.
         Adapted from https://www.w3resource.com/python-exercises/string/python-data-type-string-exercise-96.php"""
+
         s = re.sub(r"(_|-)+", " ", s).title().replace(" ", "")
 
         if s == "UserIp":
@@ -78,8 +79,9 @@ class Utils:
     @staticmethod
     def _fix_json_cols(df: pd.DataFrame, columns: list) -> pd.DataFrame:
         """
-        Private function that applies `json.loads` to any given list of columns. Needed because
-        Pandas cannot apply this particular function to multiple columns at once.
+        Private function that applies `json.loads` to any given list of
+        columns. Needed because Pandas cannot apply this particular function
+        to multiple columns at once.
         """
 
         for col in columns:
@@ -89,8 +91,9 @@ class Utils:
 
     def _fix_columns(self, df: pd.DataFrame, fix_dict: dict) -> pd.DataFrame:
         """
-        Private function that, for any DataFrame `df`, takes a dictionary `fix_dict` structured as
-        `{column_name: type}`, iterates over the columns and applies a normative type fix.
+        Private function that, for any DataFrame `df`, takes a dictionary
+        `fix_dict` structured as `{column_name: type}`, iterates over the
+        columns and applies a normative type fix.
         """
 
         for col, type in fix_dict.items():
@@ -118,8 +121,8 @@ class Utils:
         df: pd.DataFrame, category: str = "", max_length: int = 10000
     ) -> None:
         """
-        Private function that checks a given DataFrame (of a certain category) for data in
-        rows that exceeds a certain bytelength.
+        Private function that checks a given DataFrame (of a certain category)
+        for data in rows that exceeds a certain bytelength.
         """
 
         size_warning_rows = []
@@ -131,10 +134,13 @@ class Utils:
 
         if size_warning_rows:
             log(
-                f"[{category}]: {len(size_warning_rows)} rows have over 10kb of data in some row(s) of the following columns:",
+                f"[{category}]: {len(size_warning_rows)} rows have over 10kb \
+                of data in some row(s) of the following columns:",
                 "WARN",
             )
-            columns = "- " + "\n- ".join(list({x[1] for x in size_warning_rows}))
+            columns = "- " + "\n- ".join(
+                list({x[1] for x in size_warning_rows})
+            )
             log(columns, "None")
 
         return None
@@ -142,9 +148,12 @@ class Utils:
     @staticmethod
     def _max_short_col(df: pd.DataFrame, col: str) -> pd.DataFrame:
         """
-        Private function that takes any column in a DataFrame and strips the column's values,
-        while maintaining their uniqueness. Returns the DataFrame back.
+        Private function that takes any column in a DataFrame and strips the
+        column's values, while maintaining their uniqueness. Returns the
+        DataFrame back.
         """
+
+        shortened_values = set()
 
         i = 1
         same_length = False
@@ -164,19 +173,25 @@ class Utils:
 
     @staticmethod
     def _get_timediff(
-        row: pd.Series, start_col: str = "started_at", finish_col: str = "finished_at"
+        row: pd.Series,
+        start_col: str = "started_at",
+        finish_col: str = "finished_at",
     ) -> int:
         """
-        Private function that returns the number of seconds in difference between two columns in a given row.
+        Private function that returns the number of seconds in difference
+        between two columns in a given row.
         """
 
+        start_data = row[start_col]
+        finish_data = row[finish_col]
         try:
-            return (
-                pd.to_datetime(row[finish_col]) - pd.to_datetime(row[start_col])
-            ).seconds
+            start_time = pd.to_datetime(start_data)
+            finish_time = pd.to_datetime(finish_data)
+            return (finish_time - start_time).seconds
         except TypeError:
             log(
-                f"could not interpret time difference between {row[start_col]} and {row[finish_col]} due to a TypeError.",
+                f"could not interpret time difference between {start_data} \
+                    and {finish_data} due to a TypeError.",
                 "WARN",
             )
             return 0
@@ -184,7 +199,7 @@ class Utils:
     def export(
         self,
         df,
-        filename: str = None,
+        filename: str = "",
         filter_workflows: list = [],
         drop_columns: list = [],
     ) -> None:
@@ -192,19 +207,24 @@ class Utils:
         Attempts to compress df and exports it into CSV format.
         """
 
-        if not filename:
-            raise RuntimeError("Export was not provided a required filename parameter.")
+        if filename == "":
+            raise RuntimeError(
+                "Export was not provided a required filename parameter."
+            )
 
         if not isinstance(df, pd.DataFrame):
             raise RuntimeError(
-                "Export was not provided a required pandas DataFrame as its first parameter."
+                "Export was not provided a required pandas DataFrame as its \
+                first parameter."
             )
 
         df_copy = df.copy()
 
         if filter_workflows:
             query = "workflow_id == "
-            query += " or workflow_id == ".join([str(x) for x in filter_workflows])
+            query += " or workflow_id == ".join(
+                [str(x) for x in filter_workflows]
+            )
             df_copy = df_copy.query(query)
 
         if drop_columns:
@@ -213,8 +233,10 @@ class Utils:
         for col in df_copy.columns:
             unique_values = {str(x) for x in df_copy[col].fillna("-") if x}
             if len(unique_values) == 1:
+                val = list(unique_values)[0]
                 log(
-                    f'`{col}` contains only one value ("{list(unique_values)[0]}"), so this column will not be exported, to save space.',
+                    f'`{col}` contains only one value ("{val}"), so this \
+                    column will not be exported, to save space.',
                     "INFO",
                 )
                 df_copy = df_copy.drop(col, axis=1)
@@ -249,7 +271,8 @@ class Utils:
         drop_columns: list = [],
     ) -> None:
         """
-        Attempts to compress flattened annotations and exports them into CSV format.
+        Attempts to compress flattened annotations and exports them into CSV
+        format.
         """
 
         self.export(
@@ -259,12 +282,17 @@ class Utils:
             drop_columns=drop_columns,
         )
 
-    def export_observable(self, directory="output") -> None:
-        Path(directory).mkdir(parents=True) if not Path(directory).exists() else None
+    def export_observable(self, directory: str = "output") -> None:
+        Path(directory).mkdir(parents=True) if not Path(
+            directory
+        ).exists() else None
 
         # camelCase column names before exporting
         camel_classifications = self.classifications.rename(
-            columns={col: self.camel_case(col) for col in self.classifications.columns}
+            columns={
+                col: self.camel_case(col)
+                for col in self.classifications.columns
+            }
         )
         camel_classifications.index = camel_classifications.index.rename(
             "classificationID"
@@ -279,7 +307,9 @@ class Utils:
             camel_classifications,
             filename=Path(directory) / "classifications.csv",
             drop_columns=[
-                x for x in camel_classifications.columns if TASK_COLUMN.search(x)
+                x
+                for x in camel_classifications.columns
+                if TASK_COLUMN.search(x)
             ],  # dropping T0, T1, etc... since those are in annotations_flattened.csv
         )
 
@@ -295,3 +325,32 @@ class Utils:
                 )
 
         return None
+
+
+def get_current_dir(
+    download_dir: str,
+    organize_by_workflow: bool,
+    organize_by_subject_id: bool,
+    workflow_id: int = 0,
+    subject_id: int = 0,
+):
+    if organize_by_workflow:
+        # print("Organize by workflow set to TRUE.")
+        if organize_by_subject_id:
+            # print("Organize by subject_id set to TRUE.")
+            return (
+                Path(download_dir)
+                / Path(str(workflow_id))
+                / Path(str(subject_id))
+            )
+        else:
+            # print("Organize by subject_id set to FALSE.")
+            return Path(download_dir) / Path(str(workflow_id))
+    else:
+        # print("Organize by workflow set to FALSE.")
+        if organize_by_subject_id:
+            # print("Organize by subject_id set to TRUE.")
+            return Path(download_dir) / Path(str(subject_id))
+        else:
+            # print("Organize by subject_id set to FALSE.")
+            return Path(download_dir)
