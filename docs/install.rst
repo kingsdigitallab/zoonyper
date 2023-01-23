@@ -41,7 +41,7 @@ Now you should be able to use ``zoonyper`` as a regular package on your local co
 
 .. warning::
 
-    If you change the source code (located in the ``zoonyper`` directory in the repository), you will need to rerun the ``poetry build`` and the ``pip install dis/zoonyper-0.1.0.tar.gz`` commands again.
+    If you change the source code (located in the ``zoonyper`` directory in the repository), you will need to rerun the ``poetry build`` and the ``pip install dist/zoonyper-0.1.0.tar.gz`` commands again.
 
 =================================
 Quick Install in Jupyter Notebook
