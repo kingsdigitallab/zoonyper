@@ -17,7 +17,7 @@ In order to do so, you need to first ensure that you have installed Poetry:
 
 .. code-block:: bash
 
-    $ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+    $ curl -sSL https://install.python-poetry.org | python3 -
 
 Then, clone the repository:
 
