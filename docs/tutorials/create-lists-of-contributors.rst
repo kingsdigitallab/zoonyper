@@ -19,7 +19,7 @@ How to create a dictionary of contributors by workflow
     for workflow_id, rows in project.classifications.groupby("workflow_id")
   }
 
-_Note that, here, the dictionary comprehension has been separated out on multiple lines for readability.
+*Note that, here, the dictionary comprehension has been separated out on multiple lines for readability.*
 
 Saving to a JSON file
 =====================
