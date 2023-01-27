@@ -1,5 +1,5 @@
 About ``zoonyper``
-#############################################################
+##################
 
 **Zoonyper** is a Python library that facilitates interpretation and wrangling for Zooniverse files in Jupyter (and Python more generally).
 
@@ -21,6 +21,7 @@ About ``zoonyper``
    timelines
    comments
    disambiguation-deduplication
+   tutorials/index
 
 .. raw:: html
 
