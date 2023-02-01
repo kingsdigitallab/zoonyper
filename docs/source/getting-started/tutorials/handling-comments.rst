@@ -1,5 +1,5 @@
-Comments
-########
+Handling Comments
+#################
 
 ``Project.comments`` (a property) provides access to all the comments in the project as a pandas DataFrame.
 

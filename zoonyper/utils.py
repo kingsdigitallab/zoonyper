@@ -1,6 +1,5 @@
 from pathlib import Path
-from typing import Optional
-from tqdm import tqdm
+from typing import Optional, Dict, List
 
 import pandas as pd
 import hashlib
@@ -38,7 +37,9 @@ if in_ipynb():
 
 
 class Utils:
-    """TODO"""
+    """
+    TODO
+    """
 
     MAX_SIZE_OBSERVABLE = (
         50000000  # 50 MB is the max size for files on Observable
@@ -46,10 +47,20 @@ class Utils:
 
     _redacted = {}
 
+    def __init__(self):
+        """
+        Constructor method.
+        """
+
+        pass
+
     def redact_username(self, row: str) -> Optional[str]:
         """
         Returns a sha256 encoded string for any given string (and caches to
-        speed up).
+        speed up). Can be appplied to a DataFrame column:
+
+        :param row: TODO
+        :type row: str
         """
 
         if pd.isna(row):
@@ -62,12 +73,22 @@ class Utils:
 
     @staticmethod
     def trim_path(path: str) -> str:
+        """
+        TODO
+
+        :param path: TODO
+        :type path: str
+        """
         return Path(path).name
 
     @staticmethod
-    def camel_case(s):
+    def camel_case(s: str):
         """Making any string into a CamelCase.
-        Adapted from https://www.w3resource.com/python-exercises/string/python-data-type-string-exercise-96.php"""
+        Adapted from https://www.w3resource.com/python-exercises/string/python-data-type-string-exercise-96.php
+
+        :param s: String to make into camel case.
+        :type s: str
+        """
 
         s = re.sub(r"(_|-)+", " ", s).title().replace(" ", "")
 
@@ -77,11 +98,16 @@ class Utils:
         return "".join([s[0].lower(), s[1:]])
 
     @staticmethod
-    def _fix_json_cols(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+    def _fix_json_cols(df: pd.DataFrame, columns: List) -> pd.DataFrame:
         """
         Private function that applies `json.loads` to any given list of
         columns. Needed because Pandas cannot apply this particular function
         to multiple columns at once.
+
+        :param df: TODO
+        :type df: pandas.DataFrame
+        :param column: TODO
+        :type column: list
         """
 
         for col in columns:
@@ -89,11 +115,16 @@ class Utils:
 
         return df
 
-    def _fix_columns(self, df: pd.DataFrame, fix_dict: dict) -> pd.DataFrame:
+    def _fix_columns(self, df: pd.DataFrame, fix_dict: Dict) -> pd.DataFrame:
         """
         Private function that, for any DataFrame `df`, takes a dictionary
         `fix_dict` structured as `{column_name: type}`, iterates over the
         columns and applies a normative type fix.
+
+        :param df: TODO
+        :type df: pandas.DataFrame
+        :param fix_dict: TODO
+        :type fix_dict: dict
         """
 
         for col, type in fix_dict.items():
@@ -123,6 +154,13 @@ class Utils:
         """
         Private function that checks a given DataFrame (of a certain category)
         for data in rows that exceeds a certain bytelength.
+
+        :param df: TODO
+        :type df: pandas.DataFrame
+        :param category: TODO
+        :type category: str
+        :param max_length: TODO
+        :type max_length: int
         """
 
         size_warning_rows = []
@@ -151,6 +189,11 @@ class Utils:
         Private function that takes any column in a DataFrame and strips the
         column's values, while maintaining their uniqueness. Returns the
         DataFrame back.
+
+        :param df: TODO
+        :type df: pandas.DataFrame
+        :param col: TODO
+        :type col: str
         """
 
         shortened_values = set()
@@ -180,6 +223,13 @@ class Utils:
         """
         Private function that returns the number of seconds in difference
         between two columns in a given row.
+
+        :param row: TODO
+        :type row: pandas.Series
+        :param start_col: TODO
+        :type start_col: str
+        :param finish_col: TODO
+        :type finish_col: str
         """
 
         start_data = row[start_col]
@@ -198,13 +248,22 @@ class Utils:
 
     def export(
         self,
-        df,
+        df: pd.DataFrame,
         filename: str = "",
         filter_workflows: list = [],
         drop_columns: list = [],
     ) -> None:
         """
         Attempts to compress df and exports it into CSV format.
+
+        :param df: TODO
+        :type df: pandas.DataFrame
+        :param filename: TODO
+        :type filename: str
+        :param filter_workflows: TODO
+        :type filter_workflows: list
+        :param drop_columns: TODO
+        :type drop_columns: list
         """
 
         if filename == "":
@@ -248,11 +307,18 @@ class Utils:
     def export_classifications(
         self,
         filename: str = "classifications.csv",
-        filter_workflows: list = [],
-        drop_columns: list = [],
+        filter_workflows: List = [],
+        drop_columns: List = [],
     ) -> None:
         """
         Attempts to compress classifications and exports them into CSV format.
+
+        :param filename: TODO
+        :type filename: str
+        :param filter_workflows: TODO
+        :type filter_workflows: list
+        :param drop_columns: TODO
+        :type drop_columns: list
         """
 
         self.export(
@@ -267,12 +333,19 @@ class Utils:
     def export_annotations_flattened(
         self,
         filename: str = "annotations_flattened.csv",
-        filter_workflows: list = [],
-        drop_columns: list = [],
+        filter_workflows: List = [],
+        drop_columns: List = [],
     ) -> None:
         """
         Attempts to compress flattened annotations and exports them into CSV
         format.
+
+        :param filename: TODO
+        :type filename: str
+        :param filter_workflows: TODO
+        :type filter_workflows: list
+        :param drop_columns: TODO
+        :type drop_columns: list
         """
 
         self.export(
@@ -283,6 +356,13 @@ class Utils:
         )
 
     def export_observable(self, directory: str = "output") -> None:
+        """
+        TODO
+
+        :param directory: TODO
+        :type directory: str
+        """
+
         Path(directory).mkdir(parents=True) if not Path(
             directory
         ).exists() else None
@@ -334,6 +414,21 @@ def get_current_dir(
     workflow_id: int = 0,
     subject_id: int = 0,
 ):
+    """
+    TODO
+
+    :param download_dir: TODO
+    :type download_dir: str
+    :param organize_by_workflow: TODO
+    :type organize_by_workflow: bool
+    :param organize_by_subject_id: TODO
+    :type organize_by_subject_id: bool
+    :param workflow_id: TODO
+    :type workflow_id: int
+    :param subject_id: TODO
+    :type subject_id: int
+    """
+
     if organize_by_workflow:
         # print("Organize by workflow set to TRUE.")
         if organize_by_subject_id:

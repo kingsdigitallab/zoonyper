@@ -2,7 +2,8 @@ from collections import ChainMap, Counter
 from matplotlib.figure import Figure
 from pathlib import Path
 from tqdm import tqdm
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union, Dict, Tuple, List
+
 
 import pandas as pd
 
@@ -188,7 +189,7 @@ class Project(Utils):
 
         return dict(ChainMap(*extracted_dictionaries))
 
-    def participants_count(self, workflow_id: int) -> dict:
+    def participants_count(self, workflow_id: int) -> Dict:
         """
         TODO
 
@@ -365,7 +366,7 @@ class Project(Utils):
 
         return self._subject_sets
 
-    def workflow_subjects(self, workflow_id=None):
+    def workflow_subjects(self, workflow_id: int) -> list:
         """
         TODO
 
@@ -383,7 +384,7 @@ class Project(Utils):
         self,
         download_dir: Optional[str] = None,
         timeout: int = 5,
-        sleep: tuple[int, int] = (2, 5),
+        sleep: Tuple[int, int] = (2, 5),
         organize_by_workflow: bool = True,
         organize_by_subject_id: bool = True,
     ) -> Literal[True]:
@@ -420,12 +421,12 @@ class Project(Utils):
 
     def download_workflow(
         self,
-        workflow_id: int = None,
+        workflow_id: int,
         download_dir: Optional[str] = None,
-        timeout=5,
-        sleep=(2, 5),
-        organize_by_workflow=True,
-        organize_by_subject_id=True,
+        timeout: int = 5,
+        sleep: Optional[Tuple[int, int]] = (2, 5),
+        organize_by_workflow: bool = True,
+        organize_by_subject_id: bool = True,
     ) -> Literal[True]:
         """
         TODO
@@ -437,7 +438,7 @@ class Project(Utils):
         :param timeout: TODO
         :type timeout: int
         :param sleep: TODO
-        :type sleep: tuple[int, int]
+        :type sleep: Optional[tuple[int, int]]
         :param organize_by_workflow: TODO
         :type organize_by_workflow: bool
         :param organize_by_subject_id: TODO
@@ -450,7 +451,7 @@ class Project(Utils):
             download_dir = self.download_dir
 
         if not isinstance(workflow_id, int):
-            raise RuntimeError(f"workflow_id provided must be an integer")
+            raise RuntimeError("workflow_id provided must be an integer")
 
         subjects_to_download = {
             subject: self.subject_urls[subject]
@@ -559,7 +560,7 @@ class Project(Utils):
 
         return self._workflow_timeline
 
-    def get_comments(self, include_staff=True) -> pd.DataFrame:
+    def get_comments(self, include_staff: bool = True) -> pd.DataFrame:
         """
         TODO
 
@@ -746,7 +747,7 @@ class Project(Utils):
         raise SyntaxError()
 
     @property
-    def frames(self) -> dict[str, pd.DataFrame]:
+    def frames(self) -> Dict[str, pd.DataFrame]:
         """
         TODO
 
@@ -1141,7 +1142,7 @@ class Project(Utils):
 
         return []
 
-    def get_all_classifications_by_date(self) -> dict:
+    def get_all_classifications_by_date(self) -> Dict:
         """
         TODO
 
@@ -1149,18 +1150,18 @@ class Project(Utils):
         :rtype: dict
         """
 
-        dct = {}
+        o = {}
 
         workflows = {id for id, _ in self.workflows.iterrows()}
-        dct = {
+        o = {
             workflow_id: self.get_classifications_for_workflow_by_dates(
                 workflow_id
             )
             for workflow_id in workflows
         }
-        dct["All workflows"] = self.get_classifications_for_workflow_by_dates()
+        o["All workflows"] = self.get_classifications_for_workflow_by_dates()
 
-        return dct
+        return o
 
     def plot_classifications(
         self,
@@ -1200,7 +1201,7 @@ class Project(Utils):
     @property
     def annotations_flattened(
         self,
-        include_columns: list[str] = [
+        include_columns: List[str] = [
             "workflow_id",
             "workflow_version",
             "subject_ids",
@@ -1297,14 +1298,14 @@ class Project(Utils):
         :rtype: pandas.DataFrame
         """
 
-        def get_all_files(directory):
+        def get_all_files(directory: str):
             """
             Walks through a directory and returns files. Could be done with
             pathlib.Path.rglob method but this is (surprisingly) a lot faster
             (525 ms vs 2.81 s).
 
             :param directory: TODO
-            :type directory: TODO
+            :type directory: str
             :return: TODO
             :rtype: TODO
             """
@@ -1362,7 +1363,7 @@ class Project(Utils):
             )
 
         # Get hashes by file
-        def get_hashes_by_file():
+        def get_hashes_by_file() -> Dict:
             """
             Get a hash dictionary for all files in downloads_directory.
 
@@ -1449,7 +1450,9 @@ class Project(Utils):
 
         return self._subjects
 
-    def get_disambiguated_subject_id(self, subject_id: int):
+    def get_disambiguated_subject_id(
+        self, subject_id: int
+    ) -> Union[List, int]:
         """
         TODO
 
@@ -1463,7 +1466,7 @@ class Project(Utils):
         # Ensure subjects is set up
         self.subjects
 
-        if not "subject_id_disambiguated" in self.subjects.columns:
+        if "subject_id_disambiguated" not in self.subjects.columns:
             self.SUPPRESS_WARN = False  # Reset warning suppression
             raise RuntimeError(
                 "The subjects need to be disambiguated using the \

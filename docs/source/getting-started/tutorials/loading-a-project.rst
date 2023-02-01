@@ -1,10 +1,11 @@
-Loading the Base Class
-#############################################################
+Loading a Project
+#################
 
 Loading a project is done using the ``Project`` class:
 
-.. py:class:: Project(path='', classifications_path='', subjects_path='', \
-    workflows_path='', comments_path='', tags_path='')
+.. code-block:: python
+
+    project = Project(path='', classifications_path='', subjects_path='', workflows_path='', comments_path='', tags_path='')
 
 You have two options to load a project:
 

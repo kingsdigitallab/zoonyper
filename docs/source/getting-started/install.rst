@@ -1,11 +1,15 @@
 Installing Zoonyper
-#############################################################
+###################
 
 When in production, you can use PyPI to install zoonyper:
 
 .. code-block:: bash
 
     $ pip install zoonyper
+
+.. warning::
+
+    This command will not work currently, as this package is not yet published on PyPI.
 
 =================================
 In development

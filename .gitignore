@@ -5,3 +5,6 @@ _build
 .ipynb_checkpoints
 __pycache__
 tests/files/private
+docs/build
+docs/_build
+_docs
