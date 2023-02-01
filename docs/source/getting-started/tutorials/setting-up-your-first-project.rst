@@ -1,6 +1,9 @@
 Setting up your first project
 #############################
 
+Downloading files
+=================
+
 Setting up a Zoonyper ``Project`` requires you to have all the necessary files downloaded and in the same folder.
 
 From the Lab page on your Zooniverse project, you'll want to visit the "Data Exports" section, and export all the classifications, the subjects, the workflows (N.B. *not* the "workflow classifications"), the talk comments and tags documents.
@@ -17,6 +20,9 @@ Once they're downloaded, put them all into the same folder and name the classifi
 
     $ tar -xvzf <path>
 
+Initiate a ``Project`` with the files
+=====================================
+
 After that, you can initiate a new ``Project`` by passing the directory's path to the initiator of the class, like this:
 
 .. code-block:: python
@@ -27,6 +33,9 @@ After that, you can initiate a new ``Project`` by passing the directory's path t
 
 If you are interested in other ways to set up a project, check out the "Loading a project" tutorial. [TODO: LINK]
 
+Optional: Disambiguating subjects
+=================================
+
 Next, what you'll likely want to do (which will also take some time) is to *disambiguate* the subjects. Disambiguation is the process of downloading each subject as an image and subsequently extracting the hex digest for each of them. This makes it possible for us to compare which files are identical across the subjects in the project, to avoid any unintentional ambiguous classifications, and consolidating all classifications per *actual subject* rather than the subjects uploaded to Zooniverse (which can overlap).
 
 The ``Project`` class comes with a method for this, ``.disambiguate_subjects()`` which takes a download directory as its only argument:
@@ -34,6 +43,9 @@ The ``Project`` class comes with a method for this, ``.disambiguate_subjects()``
 .. code-block:: python
 
   project.disambiguate_subjects("input-directory/downloads/")
+
+Done!
+=====
 
 Now you can access the subjects of the project as a Pandas DataFrame:
 
