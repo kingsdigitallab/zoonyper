@@ -1,11 +1,10 @@
 Tutorials
 #########
 
-Contents
-========
+.. rubric:: Content
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
 
   setting-up-your-first-project
   counting-annotations

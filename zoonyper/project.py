@@ -2,8 +2,7 @@ from collections import ChainMap, Counter
 from matplotlib.figure import Figure
 from pathlib import Path
 from tqdm import tqdm
-from typing import Literal, Optional, Union, Dict, Tuple, List
-
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -34,30 +33,33 @@ class Project(Utils):
     (`classifications_path`, `subjects_path`, `workflows_path`,
     `comments_path`, `tags_path`).
 
-    :param path: general path to directory that contains all five required
+    :param path: General path to directory that contains all five required
         files
     :type path: str
-    :param classifications_path: path to classifications CSV file,
+    :param classifications_path: Path to classifications CSV file,
         optional but must be provided if no general ``path`` provided
     :type classifications_path: str
-    :param subjects_path: path to subjects CSV file, optional but must be
+    :param subjects_path: Path to subjects CSV file, optional but must be
         provided if no general ``path`` provided
     :type subjects_path: str
-    :param workflows_path: path to workflows CSV file, optional but must
+    :param workflows_path: Path to workflows CSV file, optional but must
         be provided if no general ``path`` provided
     :type workflows_path: str
-    :param comments_path: path to JSON file for project comments, optional
+    :param comments_path: Path to JSON file for project comments, optional
         but must be provided if no general ``path`` provided
     :type comments_path: str
-    :param tags_path: path to JSON file for project tags, optional but
+    :param tags_path: Path to JSON file for project tags, optional but
         must be provided if no general ``path`` provided
     :type tags_path: str
-    :param redact_users: whether to obscure user names in the classifications table
+    :param redact_users: Determines whether the script will obscure user names
+        in the classifications table automatically
     :type redact_users: bool
-    :param trim_paths: whether to trim paths in columns that we know contain paths
+    :param trim_paths: Determines whether the script will trim paths in
+        columns are known to contain paths
     :type trim_paths: bool
     :param parse_dates: TODO
     :type parse_dates: str
+    :raises RuntimeError: TODO
     """
 
     staff = []
@@ -159,11 +161,14 @@ class Project(Utils):
     @staticmethod
     def _user_logged_in(row: pd.Series) -> bool:
         """
-        TODO
+        Returns a boolean describing whether a row passed as argument contains
+        "not-logged-in" as a string.
+
+        .. versionadded:: 0.1.0
 
         :param row: TODO
         :type row: pandas.Series
-        :return: TODO
+        :return: Describes whether a user was logged in or not
         :rtype: bool
         """
         return "not-logged-in" not in row if not pd.isna(row) else False
@@ -172,11 +177,14 @@ class Project(Utils):
     def _extract_annotation_values(annotation_row: pd.Series) -> dict:
         """
         Takes an annotation row, which contains a list of tasks with values in
-        dictionary {task, task_label, value} and extracts the `value` for each
-        `task`, disregarding the `task_label` and returns them as a dictionary,
-        for easy insertion into a DataFrame.
+        a dictionary {task, task_label, value} and extracts the `value` for
+        each ``task``, disregarding the ``task_label`` and returns them as a
+        dictionary, for easy insertion into a DataFrame.
 
-        :param annotation_row: TODO
+        .. versionadded:: 0.1.0
+
+        :param annotation_row: Row, containing a list of tasks with values in
+            a dictionary
         :type annotation_row: pandas.Series
         :return: TODO
         :rtype: dict
@@ -189,14 +197,32 @@ class Project(Utils):
 
         return dict(ChainMap(*extracted_dictionaries))
 
-    def participants_count(self, workflow_id: int) -> Dict:
+    def participants_count(
+        self, workflow_id: Optional[int] = None
+    ) -> Union[Dict, int]:
         """
-        TODO
+        Get a count of the number of participants in a project's workflow (if
+        a ``workflow_id`` is passed) or the number of participants in each
+        workflow, described as a dictionary (if no ``workflow_id`` is passed).
 
-        :param workflow_id: TODO
-        :type workflow_id: int
-        :return: TODO
-        :rtype: dict
+        .. seealso::
+
+            :meth:`zoonyper.project.Project.logged_in` for the
+            count of participants who were logged in at the time of their
+            classification in a given workflow or across the project.
+
+        .. versionadded:: 0.1.0
+
+        :param workflow_id: A workflow ID for which you want to see the number
+            of participants, optional
+        :type workflow_id: Optional[int]
+        :raises RuntimeError: If the workflow ID specified is not recorded in
+            the project
+        :return: If a workflow ID was passed, an integer value describing the
+            participants count for that workflow will be returned, but if no
+            workflow ID was passed, a dictionary with workflow IDs as keys and
+            their participants counts as values will be returned.
+        :rtype: Union[dict, int]
         """
 
         if workflow_id:
@@ -225,14 +251,32 @@ class Project(Utils):
 
         return result
 
-    def logged_in(self, workflow_id: int):
+    def logged_in(self, workflow_id: Optional[int] = None) -> Union[Dict, int]:
         """
-        TODO
+        Get a count of the number of logged-in participants in a project's
+        workflow (if a ``workflow_id`` is passed) or the number of
+        participants in each workflow, described as a dictionary (if no
+        ``workflow_id`` is passed).
 
-        :param workflow_id: TODO
-        :type workflow_id: int
-        :return: TODO
-        :rtype: TODO
+        .. seealso::
+
+            :meth:`zoonyper.project.Project.participants_count` for the
+            general count of participants in a given workflow or across the
+            project.
+
+        .. versionadded:: 0.1.0
+
+        :param workflow_id: A workflow ID for which you want to see the number
+            of participants, optional
+        :type workflow_id: Optional[int]
+        :raises RuntimeError: If the workflow ID specified is not recorded in
+            the project
+        :return: If a workflow ID was passed, an integer value describing the
+            logged-in participants count for that workflow will be returned,
+            but if no workflow ID was passed, a dictionary with workflow IDs
+            as keys and their logged-in participants counts as values will be
+            returned.
+        :rtype: Union[dict, int]
         """
 
         if workflow_id:
@@ -263,27 +307,48 @@ class Project(Utils):
 
     def classification_counts(
         self, workflow_id: int, task_number: int = 0
-    ) -> dict:
+    ) -> Dict[int, Dict[str, int]]:
         """
-        TODO
+        Provides the classification count by label and subject for a
+        particular workflow, passed as a required parameter (``workflow_id``).
 
-        :param workflow_id: TODO
+        .. versionadded:: 0.1.0
+
+        :param workflow_id: The workflow ID for which you want to extract
+            classifications
         :type workflow_id: int
-        :param task_number: TODO
+        :param task_number: The task number that you want to extract from
+            across the workflow
         :type task_number: int
-        :return: TODO
-        :rtype: dict
+        :raises KeyError: If the provided task number does not appear in any
+            classification across the project
+        :return: A dictionary with the subject ID as the key and a nested
+            dictionary as the value, which in turn has the task label as the
+            key and the classification count for that task label as the value
+        :rtype: dict[int, dict[str, int]]
         """
+
+        if f"T{task_number}" not in self.classifications.columns:
+            raise KeyError(
+                f"Task number {task_number} does not appear in the \
+                classifications."
+            )
 
         results = self.classifications.query(f"workflow_id=={workflow_id}")
 
         resulting_classifications = {}
         """
         TODO: #3 [testing] What happens below if subject_ids contains multiple
-            IDs?
+            IDs? A solution could be to make subject_ids into str(subject_ids)
         """
         for subject_ids, rows in results.groupby("subject_ids"):
-            all_results = [str(x) for x in rows[f"T{task_number}"]]
+            try:
+                all_results = [str(x) for x in rows[f"T{task_number}"]]
+            except KeyError:
+                raise KeyError(
+                    f"Task number {task_number} does not appear in \
+                    the classifications."
+                )
             count_results = Counter(all_results)
             resulting_classifications[subject_ids] = dict(count_results)
 
@@ -294,6 +359,8 @@ class Project(Utils):
     ) -> Union[dict, list]:
         """
         TODO
+
+        .. versionadded:: 0.1.0
 
         :param workflow_id: TODO
         :type workflow_id: int
@@ -336,9 +403,17 @@ class Project(Utils):
     @property
     def workflow_ids(self) -> list:
         """
-        TODO
+        Provides a list of the workflow IDs associated with the project.
 
-        :return: TODO
+        .. seealso::
+
+            :attr:`zoonyper.project.Project.workflows`, the attribute
+            containing a pandas.DataFrame of all the workflows associated with
+            the project, for which this method returns the index.
+
+        .. versionadded:: 0.1.0
+
+        :return: List of workflow IDs
         :rtype: list
         """
 
@@ -351,6 +426,8 @@ class Project(Utils):
     def subject_sets(self) -> dict:
         """
         TODO
+
+        .. versionadded:: 0.1.0
 
         :return: TODO
         :rtype: dict
@@ -370,8 +447,11 @@ class Project(Utils):
         """
         TODO
 
+        .. versionadded:: 0.1.0
+
         :param workflow_id: TODO
         :type workflow_id: TODO
+        :raises RuntimeError: TODO
         :return: TODO
         :rtype: TODO
         """
@@ -389,10 +469,18 @@ class Project(Utils):
         organize_by_subject_id: bool = True,
     ) -> Literal[True]:
         """
-        Loops over all the unique workflow IDs and downloads the workflow
-        from all of them.
+        Loops over all the project's workflows and downloads the subjects from
+        each of them.
 
-        :param download_dir: TODO
+        .. seealso::
+
+            :meth:`zoonyper.project.Project.download_workflow`, the method
+            that is called to download each individual workflow. The Project's
+            download_all_subjects method is a convenient call to this function
+            for each workflow.
+
+        :param download_dir: A string representation of the path to a
+            desired download directory
         :type download_dir: Optional[str]
         :param timeout: TODO
         :type timeout: int
@@ -429,20 +517,31 @@ class Project(Utils):
         organize_by_subject_id: bool = True,
     ) -> Literal[True]:
         """
-        TODO
+        Downloads the subject for a given workflow ID passed as a required
+        parameter (``workflow_id``).
 
-        :param workflow_id: TODO
+        .. versionadded:: 0.1.0
+
+        :param workflow_id: The workflow ID that will be downloaded
         :type workflow_id: int
-        :param download_dir: TODO
+        :param download_dir: A string representation of a path to a desired
+            download directory, optional
         :type download_dir: Optional[str]
-        :param timeout: TODO
+        :param timeout: A timeout passed to :func:`requests.get`
         :type timeout: int
-        :param sleep: TODO
+        :param sleep: A tuple defining the low and the high boundary, passed
+            on to the :meth:`random.randint` to select a random number of
+            seconds to sleep between downloads, optional
         :type sleep: Optional[tuple[int, int]]
-        :param organize_by_workflow: TODO
+        :param organize_by_workflow: Determines whether downloaded subjects
+            will be organised by workflow ID in the download directory,
+            defaults to ``True``
         :type organize_by_workflow: bool
-        :param organize_by_subject_id: TODO
+        :param organize_by_subject_id: Determines whether downloaded subjects
+            will be organised by subject ID in the download directory,
+            defaults to ``True``
         :type organize_by_subject_id: bool
+        :raises SyntaxError: If the workflow ID passed is not an integer
         :return: Always returns True if successful
         :rtype: bool
         """
@@ -451,7 +550,7 @@ class Project(Utils):
             download_dir = self.download_dir
 
         if not isinstance(workflow_id, int):
-            raise RuntimeError("workflow_id provided must be an integer")
+            raise SyntaxError("workflow_id provided must be an integer")
 
         subjects_to_download = {
             subject: self.subject_urls[subject]
@@ -492,10 +591,6 @@ class Project(Utils):
                     save_file.write_bytes(r.content)
                     has_downloaded = True
 
-            # ### tqdm stops this:
-            # print(f"Subject {subject_id} downloaded:")
-            # print("- " + "- ".join(urls))
-
             if has_downloaded and isinstance(sleep, tuple):
                 time.sleep(random.randint(*sleep))
 
@@ -506,24 +601,28 @@ class Project(Utils):
         """
         Returns a sorted list of all inactive workflows.
 
-        :return: TODO
+        .. versionadded:: 0.1.0
+
+        :return: List of inactive workflow IDs
         :rtype: list
         """
 
-        return sorted(
-            list(
-                {
-                    workflow_id
-                    for workflow_id, _ in self.workflows.query(
-                        "active==False"
-                    ).iterrows()
-                }
-            )
+        lst = list(
+            {
+                workflow_id  # TODO: add str() here? Test...
+                for workflow_id, _ in self.workflows.query(
+                    "active==False"
+                ).iterrows()
+            }
         )
+
+        return sorted(lst)
 
     def get_workflow_timelines(self, include_active: bool = True) -> list:
         """
         TODO
+
+        .. versionadded:: 0.1.0
 
         :param include_active: TODO
         :type include_active: bool
@@ -543,11 +642,13 @@ class Project(Utils):
             for workflow_id in workflow_id_list:
                 classification_dates = [
                     rows.created_at
-                    for classification_id, rows in self.classifications.query(
+                    for _, rows in self.classifications.query(
                         f"workflow_id=={workflow_id}"
                     ).iterrows()
                 ]
+
                 unique_dates = sorted(list(set(classification_dates)))
+
                 if len(unique_dates):
                     self._workflow_timeline.append(
                         {
@@ -564,10 +665,12 @@ class Project(Utils):
         """
         TODO
 
+        .. versionadded:: 0.1.0
+
         :param include_staff: TODO
         :type include_staff: bool
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
         if not include_staff:
             if not self.staff:
@@ -589,10 +692,12 @@ class Project(Utils):
         """
         TODO
 
+        .. versionadded:: 0.1.0
+
         :param subject_id: TODO
         :type subject_id: TODO
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         return self.comments.query(
@@ -606,11 +711,13 @@ class Project(Utils):
         """
         TODO
 
+        .. versionadded:: 0.1.0
+
         :param name: TODO
         :type name: str
         :raises SyntaxError: TODO
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         if not self._raw_frames:
@@ -751,8 +858,10 @@ class Project(Utils):
         """
         TODO
 
+        .. versionadded:: 0.1.0
+
         :return: TODO
-        :rtype: dict[str, pandas.DataFrame]
+        :rtype: dict[str, :class:`pandas.DataFrame`]
         """
 
         existing_frames = list(self._raw_frames.keys())
@@ -796,12 +905,14 @@ class Project(Utils):
         """
         TODO
 
+        .. versionadded:: 0.1.0
+
         :param df: TODO
-        :type df: pandas.DataFrame
+        :type df: :class:`pandas.DataFrame`
         :param date_cols: TODO
         :type date_cols: list
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
         if not self.parse_dates:
             return df
@@ -815,10 +926,13 @@ class Project(Utils):
     @property
     def comments(self) -> pd.DataFrame:
         """
-        Loading function for the comments DataFrame.
+        Provides access to the project's comments JSON file interpreted as a
+        :class:`pandas.DataFrame`.
+
+        .. versionadded:: 0.1.0
 
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         date_cols = ["created_at"]
@@ -859,10 +973,13 @@ class Project(Utils):
     @property
     def tags(self) -> pd.DataFrame:
         """
-        Loading function for the tags DataFrame.
+        Provides access to the project's tags JSON file interpreted as a
+        :class:`pandas.DataFrame`.
+
+        .. versionadded:: 0.1.0
 
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         date_cols = ["created_at"]
@@ -889,10 +1006,13 @@ class Project(Utils):
     @property
     def boards(self) -> pd.DataFrame:
         """
-        Loading function for the boards DataFrame.
+        Provides access to the project's boards by interpreting some of the
+        comments JSON file as a :class:`pandas.DataFrame`.
+
+        .. versionadded:: 0.1.0
 
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         date_cols = []
@@ -913,10 +1033,13 @@ class Project(Utils):
     @property
     def discussions(self) -> pd.DataFrame:
         """
-        Loading function for the discussions DataFrame.
+        Provides access to the project's discussions  by interpreting some of the
+        comments JSON file as a :class:`pandas.DataFrame`.
+
+        .. versionadded:: 0.1.0
 
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         date_cols = []
@@ -937,10 +1060,13 @@ class Project(Utils):
     @property
     def workflows(self) -> pd.DataFrame:
         """
-        Loading function for the workflows DataFrame.
+        Provides access to the project's workflows CSV file interpreted as a
+        :class:`pandas.DataFrame`.
+
+        .. versionadded:: 0.1.0
 
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         date_cols = []
@@ -956,10 +1082,13 @@ class Project(Utils):
     @property
     def subjects(self) -> pd.DataFrame:
         """
-        Loading function for the subjects DataFrame.
+        Provides access to the project's subjects CSV file interpreted as a
+        :class:`pandas.DataFrame`.
+
+        .. versionadded:: 0.1.0
 
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         date_cols = ["created_at", "updated_at", "retired_at"]
@@ -1019,10 +1148,13 @@ class Project(Utils):
     @property
     def classifications(self) -> pd.DataFrame:
         """
-        Loading function for the classifications DataFrame.
+        Provides access to the project's classifications CSV file interpreted
+        as a :class:`pandas.DataFrame`.
+
+        .. versionadded:: 0.1.0
 
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         date_cols = ["created_at"]
@@ -1103,18 +1235,25 @@ class Project(Utils):
         return self._classifications
 
     def get_classifications_for_workflow_by_dates(
-        self, workflow_id: Optional[Union[int, str]] = ""
-    ) -> list:
+        self, workflow_id: Optional[Union[int, str]] = None
+    ) -> List[Dict[str, Union[str, int]]]:
         """
-        TODO
+        Provides a list of the number of classifications in the project at any
+        given date, filtered by workflow if provided (``workflow_id``).
 
-        :param workflow_id: TODO
+        .. versionadded:: 0.1.0
+
+        :param workflow_id: The workflow ID, which will filter the
+            classifications, if provided, optional.
         :type workflow_id: Optional[Union[int, str]]
-        :return: TODO
-        :rtype: list
+        :return: A list of dictionaries which have two keys, "date" and
+            "close", where close counts the classifications present in the
+            filtered classifications DataFrame at any given date in the
+            classifications DataFrame's date range.
+        :rtype: list[dict[str, Union[str, int]]]
         """
 
-        if workflow_id == "":
+        if not workflow_id:
             subframe = self.classifications
         else:
             subframe = self.classifications.query(
@@ -1125,39 +1264,47 @@ class Project(Utils):
             date: len(rows) for date, rows in subframe.groupby("created_at")
         }
 
-        if list(values.keys()):
-            lst = []
-            cur = 0
+        all_dates = [str(x) for x in values.keys()]
 
-            for date in [
-                x.strftime("%Y-%m-%d")
-                for x in pd.date_range(
-                    min(list(values.keys())), max(list(values.keys()))
-                )
-            ]:
-                cur += values.get(date, 0)
-                lst.append({"date": date, "close": cur})
+        if not all_dates:
+            return []
 
-            return lst
+        min_date = min(all_dates)
+        max_date = max(all_dates)
 
-        return []
+        date_range = pd.date_range(min_date, max_date)
+
+        dates = [x.strftime("%Y-%m-%d") for x in date_range]
+
+        lst, cur = [], 0
+        for date in dates:
+            cur += values.get(date, 0)
+            lst.append({"date": date, "close": cur})
+
+        return lst
 
     def get_all_classifications_by_date(self) -> Dict:
         """
-        TODO
+        Provides a dictionary with information about the number of
+        classifications in the project at any given date, provided both for
+        the project overall and by workflow.
 
-        :return: TODO
+        .. versionadded:: 0.1.0
+
+        :return: A dictionary with the project's workflow IDs as keys (as well
+            as a cross-project, "All workflows" key) and, as values, a list of
+            dictionaries for each workflow (and the entire project) which have
+            two keys, "date" and "close", where close counts the
+            classifications present in the filtered classifications DataFrame
+            at any given date in the classifications DataFrame's date range.
         :rtype: dict
         """
 
-        o = {}
-
-        workflows = {id for id, _ in self.workflows.iterrows()}
         o = {
             workflow_id: self.get_classifications_for_workflow_by_dates(
                 workflow_id
             )
-            for workflow_id in workflows
+            for workflow_id in self.workflow_ids
         }
         o["All workflows"] = self.get_classifications_for_workflow_by_dates()
 
@@ -1170,32 +1317,45 @@ class Project(Utils):
         height: int = 5,
     ) -> Figure:
         """
-        TODO
+        Renders the classifications for the project or a particular workflow
+        (if ``workflow_id`` is provided) as a
+        :class:`matplotlib.figure.Figure`.
 
-        :param workflow_id: TODO
+        .. seealso::
+
+            :meth:`zoonyper.project.Project.get_classifications_for_workflow_by_dates`,
+            the method that is used to generate the growth of classifications.
+            The ``workflow_id`` passed to the plot_classifications method is
+            passed on as-is.
+
+        .. versionadded:: 0.1.0
+
+        :param workflow_id: Any workflow ID from the project, which can be
+            used for filtering
         :type workflow_id: int
-        :param width: TODO
+        :param width: Figure width in inches, default: 15
         :type width: int
-        :param height: TODO
+        :param height: Figure height in inches, default: 5
         :type height: int
-        :raises SyntaxError: TODO
-        :return: TODO
-        :rtype: matplotlib.figure.Figure
+        :raises SyntaxError: If width and height are not provided as integers
+        :return: A line plot showing the growth of classifications
+        :rtype: :class:`matplotlib.figure.Figure`
         """
 
         if not isinstance(width, int) or not isinstance(height, int):
             raise SyntaxError("Width and height must be provided as integers")
 
+        data = self.get_classifications_for_workflow_by_dates(workflow_id)
+
         # load DataFrame
-        df = pd.DataFrame(
-            self.get_classifications_for_workflow_by_dates(workflow_id)
-        )
+        df = pd.DataFrame(data)
         df.date = pd.to_datetime(df.date)
         df = df.set_index("date")
 
         # Set plot size and return the Figure
         ax = df.plot(figsize=(width, height))
         fig = ax.get_figure()
+
         return fig
 
     @property
@@ -1208,19 +1368,28 @@ class Project(Utils):
         ],
     ) -> pd.DataFrame:
         """
-        TODO
+        Strips the classifications down to a minimal set, preserving certain
+        columns (passed as the ``include_columns`` parameter) with
+        classification IDs as the index and each provided classification in
+        column T0, T1, T2, etc.
 
-        :param include_columns: TODO
+        .. versionadded:: 0.1.0
+
+        :param include_columns: The list of columns to preserve from the
+            classifications DataFrame, default: ``["workflow_id",
+            "workflow_version", "subject_ids"]``
         :type include_columns: list[str]
+        :raises NotImplementedError: If a type of data is encountered that
+            cannot be interpreted by the script
         :return: TODO
-        :rtype: pandas.DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         def extract_values(x):
             if isinstance(x, str):
                 try:
                     x = json.loads(x)
-                except:  # TODO: replace bare except clause
+                except json.JSONDecodeError:
                     return x
 
             if isinstance(x, list):
@@ -1229,34 +1398,32 @@ class Project(Utils):
                     for _dict in x:
                         for detail in _dict.get("details"):
 
-                            if isinstance(
-                                detail.get("value"), str
-                            ) or isinstance(detail.get("value"), int):
-                                values.append(str(detail.get("value")))
-                            elif not detail.get("value"):
+                            value = detail.get("value")
+                            if isinstance(value, str) or isinstance(
+                                value, int
+                            ):
+                                values.append(str(value))
+                            elif not value:
                                 return ""
-                            elif isinstance(detail.get("value"), list):
-                                if len(detail.get("value")) == 1:
-                                    values.append(str(detail.get("value")))
+                            elif isinstance(value, list):
+                                if len(value) == 1:
+                                    values.append(str(value))
                                 else:
                                     values.append(
-                                        ",".join(
-                                            [
-                                                str(x)
-                                                for x in detail.get("value")
-                                            ]
-                                        )
+                                        ",".join([str(x) for x in value])
                                     )
                             else:
-                                raise RuntimeError("A bug has occurred: NONE")
+                                raise NotImplementedError(
+                                    f"An error occurred interpreting: {value}"
+                                )
                     return "|".join([x for x in values if x])
                 else:
                     return "|".join([str(y) for y in x if y])
 
             elif isinstance(x, dict):
                 values = []
-                if len(x.get("details")) == 1:
-                    values.append(str(x.get("details")[0].get("value")))
+                if len(x.get("details"), []) == 1:
+                    values.append(str(x.get("details", [])[0].get("value")))
 
                 return "|".join([x for x in values if x])
             elif isinstance(x, str):
@@ -1264,7 +1431,9 @@ class Project(Utils):
             elif isinstance(x, int):
                 return str(x)
             else:
-                raise RuntimeError("An error occurred interpreting", x)
+                raise NotImplementedError(
+                    f"An error occurred interpreting: {x}"
+                )
 
         if not isinstance(self._flattened, pd.DataFrame):
             task_columns = sorted(
@@ -1287,15 +1456,19 @@ class Project(Utils):
         return self._flattened
 
     def disambiguate_subjects(
-        self, downloads_directory: Optional[str] = ""
+        self, downloads_directory: Optional[str] = None
     ) -> pd.DataFrame:
         """
         TODO
 
-        :param downloads_directory: TODO
-        :type downloads_directory: str
-        :return: TODO
-        :rtype: pandas.DataFrame
+        .. versionadded:: 0.1.0
+
+        :param downloads_directory: The file path to an existing directory
+            where the downloads from the method will be saved
+        :type downloads_directory: Optional[str]
+        :raises RuntimeError: TODO
+        :return: The disambiguated subjects' DataFrame
+        :rtype: :class:`pandas.DataFrame`
         """
 
         def get_all_files(directory: str):
@@ -1303,6 +1476,8 @@ class Project(Utils):
             Walks through a directory and returns files. Could be done with
             pathlib.Path.rglob method but this is (surprisingly) a lot faster
             (525 ms vs 2.81 s).
+
+            .. versionadded:: 0.1.0
 
             :param directory: TODO
             :type directory: str
@@ -1325,6 +1500,8 @@ class Project(Utils):
             """
             From https://github.com/Living-with-machines/zooniverse-data-analysis/blob/main/identifying-double-files.ipynb
 
+            .. versionadded:: 0.1.0
+
             :param path: TODO
             :type path: str
             :return: TODO
@@ -1342,13 +1519,14 @@ class Project(Utils):
             return digest
 
         self.SUPPRESS_WARN = True
-        # Ensure we have loaded self._subjects
+        # Ensure self._subjects is loaded
         self.subjects
         self.SUPPRESS_WARN = False
 
-        # Check if we can assume that this method has already been run:
-        if "subject_id_disambiguated" in self._subjects.columns:
-            return self._subjects
+        # Check whether it can be assumed that this method has already been
+        # run:
+        if "subject_id_disambiguated" in self.subjects.columns:
+            return self.subjects
 
         # Auto-setting for download_dir
         if not downloads_directory:
@@ -1367,6 +1545,9 @@ class Project(Utils):
             """
             Get a hash dictionary for all files in downloads_directory.
 
+            .. versionadded:: 0.1.0
+
+            :raises RuntimeError: TODO
             :return: TODO
             :rtype: TODO
             """
@@ -1456,8 +1637,11 @@ class Project(Utils):
         """
         TODO
 
+        .. versionadded:: 0.1.0
+
         :param subject_id: TODO
         :type subject_id: int
+        :raises RuntimeError: TODO
         :return: TODO
         :rtype: TODO
         """
@@ -1497,6 +1681,8 @@ class Project(Utils):
         """
         TODO
 
+        .. versionadded:: 0.1.0
+
         :return: TODO
         :rtype: TODO
         """
@@ -1521,6 +1707,8 @@ class Project(Utils):
         """
         TODO
 
+        .. versionadded:: 0.1.0
+
         :param downloads_directory: TODO
         :type downloads_directory: str
         :param organize_by_workflow: TODO
@@ -1540,12 +1728,17 @@ class Project(Utils):
             """
             TODO
 
+            .. versionadded:: 0.1.0
+
             :param downloads_directory: TODO
             :type downloads_directory: str
             :param organize_by_workflow: TODO
             :type organize_by_workflow: bool
             :param organize_by_subject_id: TODO
             :type organize_by_subject_id: bool
+            :raises RuntimeError: TODO
+            :return: TODO
+            :rtype: TODO
             """
             paths = []
 

@@ -11,20 +11,21 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    getting-started/index
    api/index
 
-import
-load
-data-structure
-downloading-subject-files
-participants
-agreement
-timelines
-comments
-disambiguation-deduplication
+..
+   import
+   load
+   data-structure
+   downloading-subject-files
+   participants
+   agreement
+   timelines
+   comments
+   disambiguation-deduplication
 
 
 Indices and tables

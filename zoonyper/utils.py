@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Union
 
 import pandas as pd
 import hashlib
@@ -38,12 +38,20 @@ if in_ipynb():
 
 class Utils:
     """
-    TODO
+    Superclass to :class:`.Project`, i.e. all the methods in this class are
+    inherited by the Project class. This impacts the use of some methods, see
+    for example :meth:`redact_username`.
+
+    .. data:: MAX_SIZE_OBSERVABLE
+
+        Constant defining the size of the maximum size for Observable export.
+        Default: 50MB is the max size for files on Observable, but can be set
+        to other values, should Observable allow for larger files.
+
+        .. versionadded:: 0.1.0
     """
 
-    MAX_SIZE_OBSERVABLE = (
-        50000000  # 50 MB is the max size for files on Observable
-    )
+    MAX_SIZE_OBSERVABLE = 50000000
 
     _redacted = {}
 
@@ -54,60 +62,100 @@ class Utils:
 
         pass
 
-    def redact_username(self, row: str) -> Optional[str]:
+    def redact_username(self, username: str) -> Optional[str]:
         """
         Returns a sha256 encoded string for any given string (and caches to
-        speed up). Can be appplied to a DataFrame column:
+        speed up).
 
-        :param row: TODO
-        :type row: str
+        As :class:`.Utils` is inherited by :class:`.Project`, it should be
+        accessible through ``self``. Here is an example:
+
+        .. code-block:: python
+
+            project = Project("<path>")
+            project.user_name.apply(self.redact_username)
+
+        .. versionadded:: 0.1.0
+
+        :param username: The username that you want to encode
+        :type username: str
+        :return: Username that is encoded to not be clear to human eyes
+        :rtype: Optional[str]
         """
 
-        if pd.isna(row):
+        if pd.isna(username):
             return None
 
-        if row not in self._redacted:
-            self._redacted[row] = hashlib.sha256(str(row).encode()).hexdigest()
+        if username not in self._redacted:
+            self._redacted[username] = hashlib.sha256(
+                str(username).encode()
+            ).hexdigest()
 
-        return self._redacted[row]
-
-    @staticmethod
-    def trim_path(path: str) -> str:
-        """
-        TODO
-
-        :param path: TODO
-        :type path: str
-        """
-        return Path(path).name
+        return self._redacted[username]
 
     @staticmethod
-    def camel_case(s: str):
-        """Making any string into a CamelCase.
-        Adapted from https://www.w3resource.com/python-exercises/string/python-data-type-string-exercise-96.php
+    def trim_path(path: Union[str, Path]) -> str:
+        """
+        Shortcut that returns the name of the file from a file path,
+        maintaining flexibility of the path's type.
 
-        :param s: String to make into camel case.
-        :type s: str
+        .. versionadded:: 0.1.0
+
+        :param path: File path
+        :type path: Union[str, Path]
+        :return: Filename from path
+        :rtype: str
         """
 
-        s = re.sub(r"(_|-)+", " ", s).title().replace(" ", "")
+        if isinstance(path, str):
+            path = Path(path)
+        elif isinstance(path, Path):
+            pass
+        else:
+            raise TypeError(
+                "Path provided must be of type string or PurePath."
+            )
 
-        if s == "UserIp":
-            s = "UserIP"
+        return path.name
 
-        return "".join([s[0].lower(), s[1:]])
+    @staticmethod
+    def camel_case(string: str) -> str:
+        """
+        Makes any string into a CamelCase. Adapted from
+        https://www.w3resource.com/python-exercises/string/python-data-type-string-exercise-96.php # noqa
+
+        .. versionadded:: 0.1.0
+
+        :param string: String to make into camel case.
+        :type string: str
+        :return: String camel cased.
+        :rtype: str
+        """
+
+        string = re.sub(r"(_|-)+", " ", string).title().replace(" ", "")
+
+        if string == "UserIp":
+            string = "UserIP"
+
+        return "".join([string[0].lower(), string[1:]])
 
     @staticmethod
     def _fix_json_cols(df: pd.DataFrame, columns: List) -> pd.DataFrame:
         """
         Private function that applies `json.loads` to any given list of
-        columns. Needed because Pandas cannot apply this particular function
-        to multiple columns at once.
+        columns in a provided DataFrame (``df``). Needed because Pandas cannot
+        apply this particular function to multiple columns at once.
 
-        :param df: TODO
-        :type df: pandas.DataFrame
-        :param column: TODO
-        :type column: list
+        .. versionadded:: 0.1.0
+
+        :param df: The DataFrame in which we want to fix the columns with
+            nested JSON data
+        :type df: :class:`pandas.DataFrame`
+        :param columns: List of the column names to process
+        :type columns: list
+        :return: The DataFrame passed in the first parameter, with JSON-loaded
+            content
+        :rtype: :class:`pandas.DataFrame`
         """
 
         for col in columns:
@@ -121,14 +169,18 @@ class Utils:
         `fix_dict` structured as `{column_name: type}`, iterates over the
         columns and applies a normative type fix.
 
+        .. versionadded:: 0.1.0
+
         :param df: TODO
-        :type df: pandas.DataFrame
+        :type df: :class:`pandas.DataFrame`
         :param fix_dict: TODO
         :type fix_dict: dict
+        :return: TODO
+        :rtype: :class:`pandas.DataFrame`
         """
 
         for col, type in fix_dict.items():
-            if not col in df.columns:
+            if col not in df.columns:
                 continue
 
             if type == int:
@@ -155,12 +207,16 @@ class Utils:
         Private function that checks a given DataFrame (of a certain category)
         for data in rows that exceeds a certain bytelength.
 
+        .. versionadded:: 0.1.0
+
         :param df: TODO
-        :type df: pandas.DataFrame
+        :type df: :class:`pandas.DataFrame`
         :param category: TODO
         :type category: str
         :param max_length: TODO
         :type max_length: int
+        :return: Nothing
+        :rtype: None
         """
 
         size_warning_rows = []
@@ -190,10 +246,14 @@ class Utils:
         column's values, while maintaining their uniqueness. Returns the
         DataFrame back.
 
+        .. versionadded:: 0.1.0
+
         :param df: TODO
-        :type df: pandas.DataFrame
+        :type df: :class:`pandas.DataFrame`
         :param col: TODO
         :type col: str
+        :return: TODO
+        :rtype: :class:`pandas.DataFrame`
         """
 
         shortened_values = set()
@@ -224,12 +284,16 @@ class Utils:
         Private function that returns the number of seconds in difference
         between two columns in a given row.
 
+        .. versionadded:: 0.1.0
+
         :param row: TODO
         :type row: pandas.Series
         :param start_col: TODO
         :type start_col: str
         :param finish_col: TODO
         :type finish_col: str
+        :return: TODO
+        :rtype: int
         """
 
         start_data = row[start_col]
@@ -250,20 +314,34 @@ class Utils:
         self,
         df: pd.DataFrame,
         filename: str = "",
-        filter_workflows: list = [],
-        drop_columns: list = [],
+        filter_workflows: Optional[list] = None,
+        drop_columns: Optional[list] = None,
     ) -> None:
         """
-        Attempts to compress df and exports it into CSV format.
+        Attempts to compress a provided DataFrame (``df``) and exports it into
+        CSV format, written to a file (``filename``). If a list of workflows
+        to filter is provided, only those provided in the list
+        (``filter_workflows``) will be saved in the final CSV. If a list of
+        column names is passed as an argument (``drop_columns``), those will be
+        dropped from the DataFrame before saving.
 
-        :param df: TODO
-        :type df: pandas.DataFrame
-        :param filename: TODO
+        :term:`Export`
+
+        .. versionadded:: 0.1.0
+
+        :param df: The DataFrame we want to save
+        :type df: :class:`pandas.DataFrame`
+        :param filename: The filename to which we want to save the CSV, should
+            have the file suffix ``.csv``
         :type filename: str
-        :param filter_workflows: TODO
+        :param filter_workflows: List of Zooniverse workflows to keep in the
+            resulting CSV file
         :type filter_workflows: list
-        :param drop_columns: TODO
+        :param drop_columns: List of column names to keep in the resulting CSV
+            file
         :type drop_columns: list
+        :return: Nothing
+        :rtype: None
         """
 
         if filename == "":
@@ -313,12 +391,16 @@ class Utils:
         """
         Attempts to compress classifications and exports them into CSV format.
 
+        .. versionadded:: 0.1.0
+
         :param filename: TODO
         :type filename: str
         :param filter_workflows: TODO
         :type filter_workflows: list
         :param drop_columns: TODO
         :type drop_columns: list
+        :return: Nothing
+        :rtype: None
         """
 
         self.export(
@@ -340,6 +422,8 @@ class Utils:
         Attempts to compress flattened annotations and exports them into CSV
         format.
 
+        .. versionadded:: 0.1.0
+
         :param filename: TODO
         :type filename: str
         :param filter_workflows: TODO
@@ -359,8 +443,12 @@ class Utils:
         """
         TODO
 
+        .. versionadded:: 0.1.0
+
         :param directory: TODO
         :type directory: str
+        :return: Nothing
+        :rtype: None
         """
 
         Path(directory).mkdir(parents=True) if not Path(
@@ -413,9 +501,12 @@ def get_current_dir(
     organize_by_subject_id: bool,
     workflow_id: int = 0,
     subject_id: int = 0,
-):
+) -> Path:
     """
-    TODO
+    Transforms a number of parameters into a Path, depending on the logic
+    passed in the parameters.
+
+    .. versionadded:: 0.1.0
 
     :param download_dir: TODO
     :type download_dir: str
@@ -427,6 +518,8 @@ def get_current_dir(
     :type workflow_id: int
     :param subject_id: TODO
     :type subject_id: int
+    :return: TODO
+    :rtype: pathlib.Path
     """
 
     if organize_by_workflow:

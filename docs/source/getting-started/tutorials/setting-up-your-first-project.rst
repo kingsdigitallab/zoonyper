@@ -31,7 +31,7 @@ After that, you can initiate a new ``Project`` by passing the directory's path t
 
   project = Project("input-directory")
 
-If you are interested in other ways to set up a project, check out the "Loading a project" tutorial. [TODO: LINK]
+If you are interested in other ways to set up a project, check out the :ref:`loading a project` tutorial. (The method shown here is equivalent to :ref:`"Option 2: Specifying directory with required files" <loading-project-option-2>`)
 
 Optional: Disambiguating subjects
 =================================
@@ -58,3 +58,5 @@ Now you can access the subjects of the project as a Pandas DataFrame:
 .. code-block:: python
 
   project.classifications
+
+Next, you may want to check out methods for how to... TODO - link to further ideas.
