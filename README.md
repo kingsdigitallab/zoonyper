@@ -12,7 +12,7 @@ Installing through `pip`:
 $ pip install zoonyper
 ```
 
-Because this project is in **active development**, you need to install from the repository for the time being. In order to do so, follow [the installation instructions](docs/install.rst).
+Because this project is in **active development**, you need to install from the repository for the time being. In order to do so, follow [the installation instructions](docs/source/getting-started/install.rst).
 
 ## Documentation
 
