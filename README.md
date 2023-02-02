@@ -15,3 +15,14 @@ Because this project is in **active development**, you need to install from the 
 ## Documentation
 
 The full documentation is currently available with `sphinx` in the [`docs`](docs/index.rst) directory.
+
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
