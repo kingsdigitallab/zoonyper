@@ -16,7 +16,7 @@ Because this project is in **active development**, you need to install from the 
 
 ## Documentation
 
-The full documentation is currently available with `sphinx` in the [`docs`](docs/index.rst) directory.
+The full documentation is currently available with [`sphinx`](https://www.sphinx-doc.org/en/master/) in the [`docs`](docs) directory.
 
 ## Contributors
 
