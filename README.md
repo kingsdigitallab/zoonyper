@@ -1,5 +1,7 @@
 # About ``zoonyper``
 
+[![All Contributors](https://img.shields.io/github/all-contributors/Living-with-machines/zoonyper?color=ee8449&style=flat-square)](#contributors)
+
 **Zoonyper** is a Python library that facilitates interpretation and wrangling for Zooniverse files in Jupyter (and Python more generally).
 
 ## Installation
