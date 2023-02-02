@@ -23,6 +23,10 @@ In order to do so, you need to first ensure that you have installed Poetry:
 
     $ curl -sSL https://install.python-poetry.org | python3 -
 
+.. warning::
+
+    Make sure the command above, after the pipe ``|`` refers to the correctly linked Python, i.e. you may want it to refer to ``python`` or ``python3`` or whatever your symlinked binary is called.
+
 Then, clone the repository:
 
 .. code-block:: bash
