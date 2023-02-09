@@ -22,7 +22,7 @@ Here's how you can use Zoonyper in your own project:
     from zoonyper import Project
     ```
 
-3. **Initialize a `Project` object**: To start using the Project class, you'll need to create a Project object. You can do this by calling the constructor and passing in the path to the Zooniverse annotations file:
+3. **Initialize a `Project` object**: To start using the Project class, you'll need to create a Project object. You can do this by calling the constructor and passing in the path to the directory that contains all the files from your Zooniverse project lab\*:
 
     ```py
     project = Project("<path to the directory with all necessary files>")
@@ -31,6 +31,8 @@ Here's how you can use Zoonyper in your own project:
 4. **Access the project's data and metadata**: Once you have a `Project` object, you can access its annotations by using the `.classifications` attribute. This attribute is a Pandas DataFrame, where each row contains information about a single classification, including annotations.
 
 5. **Process the data and metadata**: Because the data structures in Zoonyper are Pandas DataFrames, you can process the classifications, subjects, and annotations in any way you like, using the tools and techniques that you're familiar with. For example, you might want to calculate statistics about the annotations, or create plots to visualize the data.
+
+\* The files needed can be fetched from clicking "Data Exports" in your project lab and downloading the classification report, subject export, workflow export, talk comments and talk tags exports. They should be named "classifications.csv", "subjects.csv", "workflows.csv", and "comments.json" and "tags.json" respectively, placed in a folder. This folder's path is what should be passed to the `Project` constructor.
 
 ## Installation
 
