@@ -1,16 +1,41 @@
 Setting up your first project
 #############################
 
-Downloading files
-=================
+Downloading and Organizing Files for Your Zoonyper Project
+==========================================================
 
-Setting up a Zoonyper ``Project`` requires you to have all the necessary files downloaded and in the same folder.
+To set up your Zoonyper project, you'll need to download all the necessary files and store them in the same folder. Here's how to do it:
 
-From the Lab page on your Zooniverse project, you'll want to visit the "Data Exports" section, and export all the classifications, the subjects, the workflows (N.B. *not* the "workflow classifications"), the talk comments and tags documents.
+#. Go to the Lab page of your Zooniverse project and navigate to the "Data Exports" section.
 
-Once they're downloaded, put them all into the same folder and name the classifications file, ``classifications.csv``, the subjects file ``subjects.csv``, the workflows file ``workflows.csv``, the comments file ``comments.json`` and the tags file ``tags.json``. *Note that the last two files are JSON files and not CSV files.*
+#. Download the following files:
 
-.. note::
+   * Classifications (as a CSV file)
+
+   * Subjects (as a CSV file)
+
+   * Workflows (as a CSV file)
+
+   * Talk comments (as a JSON file)
+
+   * Tags (as a JSON file)
+
+   *Note: Be sure to select the correct files and formats, and avoid downloading the "workflow classifications" file.*
+
+#. Once the files are downloaded, move them to a new folder and give each file a specific name:
+
+   * ``classifications.csv`` for the classifications file
+   * ``subjects.csv`` for the subjects file
+   * ``workflows.csv`` for the workflows file
+   * ``comments.json`` for the talk comments file
+   * ``tags.json`` for the tags file
+
+   *(Note: Remember that the last two files are JSON files and not CSV files.)*
+
+By following these steps, you'll have all the necessary files organized and ready to use for your Zoonyper project.
+
+.. admonition:: Unpacking comments and tags .tar files
+  :class: dropdown
 
   The comments and tags files are downloaded as .tar files, which need to be unpacked on your local machine. On macOS, you can use the built-in Archive Utility.
 
@@ -20,43 +45,73 @@ Once they're downloaded, put them all into the same folder and name the classifi
 
     $ tar -xvzf <path>
 
-Initiate a ``Project`` with the files
-=====================================
+Initializing a ``Project`` with the Downloaded Files
+====================================================
 
-After that, you can initiate a new ``Project`` by passing the directory's path to the initiator of the class, like this:
+Once you've downloaded and organized the necessary files for your Zoonyper project (in the previous step), you can initiate a new ``Project`` in Python. Here's how to do it:
 
-.. code-block:: python
+#. Open a new Python script or Jupyter notebook and import the Zoonyper library:
 
-  from zoonyper import Project
+   .. code-block:: python
 
-  project = Project("input-directory")
+     from zoonyper import Project
 
-If you are interested in other ways to set up a project, check out the :ref:`loading a project` tutorial. (The method shown here is equivalent to :ref:`"Option 2: Specifying directory with required files" <loading-project-option-2>`)
+#. Specify the directory path where you stored the downloaded files:
 
-Optional: Disambiguating subjects
-=================================
+   .. code-block:: python
 
-Next, what you'll likely want to do (which will also take some time) is to *disambiguate* the subjects. Disambiguation is the process of downloading each subject as an image and subsequently extracting the hex digest for each of them. This makes it possible for us to compare which files are identical across the subjects in the project, to avoid any unintentional ambiguous classifications, and consolidating all classifications per *actual subject* rather than the subjects uploaded to Zooniverse (which can overlap).
+     project = Project("path/to/input-directory")
 
-The ``Project`` class comes with a method for this, ``.disambiguate_subjects()`` which takes a download directory as its only argument:
+   (Replace ``"path/to/input-directory"`` with the actual path to your directory.)
 
-.. code-block:: python
+   This creates a new ``Project`` object that will contain all the necessary data from the downloaded files.
 
-  project.disambiguate_subjects("input-directory/downloads/")
+That's it! You've now successfully initialized a Zoonyper project with your downloaded files.
 
-Done!
-=====
+.. note::
+  
+  If you are interested in alternative ways to set up a project, check out the :ref:`loading a project` tutorial. (The method shown here is equivalent to :ref:`"Option 2: Specifying directory with required files" <loading-project-option-2>`)
 
-Now you can access the subjects of the project as a Pandas DataFrame:
+Disambiguating subjects (Optional)
+==================================
 
-.. code-block:: python
+To avoid ambiguous classifications and consolidate all classifications per actual subject (rather than the subjects uploaded to Zooniverse), you can perform a process called *disambiguation* on the downloaded subjects. Disambiguation involves downloading each subject image and extracting a unique identifier for each one, which Zoonyper can use to group identical subjects together.
 
-  project.subjects
+To disambiguate the subjects in your Zoonyper project, follow these steps:
 
-. . . and the classifications of the project, which is also provided as a Pandas DataFrame:
+#. Create a new folder to store the subject image files:
 
-.. code-block:: python
+   .. code-block:: bash
 
-  project.classifications
+     $ mkdir input-directory/downloads/
 
-Next, you may want to check out methods for how to... TODO - link to further ideas.
+#. Call the ``.disambiguate_subjects()`` method on your ``Project`` object and pass in the download directory as its argument:
+
+   .. code-block:: python
+
+     project.disambiguate_subjects("input-directory/downloads/")
+
+   This method will download each subject image and extract its unique identifier, which will be stored in the project's metadata. Note that this process may take some time depending on the number of subjects in your project.
+
+That's it! You've now successfully disambiguated the subjects in your Zoonyper project.
+
+Finishing Up
+============
+
+Congratulations, you've successfully set up and initialized a Zoonyper project with your downloaded files! Here are a couple of final tips to help you get started:
+
+* Access the project's subjects and classifications as Pandas DataFrames:
+
+  .. code-block:: python
+
+    project.subjects
+    project.classifications
+
+  These two DataFrames contain all the information you need to start analyzing and visualizing your project data.
+
+* Check out the Zoonyper documentation and examples for more ideas on how to use the library. Here are a few topics to get you started:
+
+  * Working with workflows and tasks
+  * Filtering and grouping classifications
+  * Creating visualizations and summary statistics
+  * Exporting data in various formats

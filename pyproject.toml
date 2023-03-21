@@ -5,7 +5,7 @@ description = ""
 authors = ["Kalle Westerling <kalle.westerling@bl.uk>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8.16"
 pandas = "1.4.1"
 requests = "2.25.1"
 furo = "^2022.4.7"
@@ -15,6 +15,7 @@ spacy = "^3.2.4"
 wasabi = "^0.9.1"
 sphinx-rtd-theme = "^1.1.1"
 sphinx-copybutton = "^0.5.1"
+sphinx-togglebutton = "^0.3.2"
 matplotlib = "^3.6.3"
 
 [tool.poetry.dev-dependencies]

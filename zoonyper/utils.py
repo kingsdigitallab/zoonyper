@@ -101,10 +101,15 @@ class Utils:
 
         .. versionadded:: 0.1.0
 
-        :param path: File path
-        :type path: Union[str, Path]
-        :return: Filename from path
-        :rtype: str
+        Parameters
+        ----------
+        path :  Union[str, Path]
+            File path
+
+        Returns
+        -------
+        str
+            Filename from path
         """
 
         if isinstance(path, str):
@@ -121,15 +126,23 @@ class Utils:
     @staticmethod
     def camel_case(string: str) -> str:
         """
-        Makes any string into a CamelCase. Adapted from
-        https://www.w3resource.com/python-exercises/string/python-data-type-string-exercise-96.php # noqa
+        Makes any string into a CamelCase.
 
         .. versionadded:: 0.1.0
 
-        :param string: String to make into camel case.
-        :type string: str
-        :return: String camel cased.
-        :rtype: str
+        Parameters
+        ----------
+        string : str
+            String to make into camel case.
+
+        Returns
+        -------
+        str
+            String camel cased.
+
+        Notes
+        -----
+        Adapted from http://bit.ly/3yXqKs2.
         """
 
         string = re.sub(r"(_|-)+", " ", string).title().replace(" ", "")
@@ -142,22 +155,26 @@ class Utils:
     @staticmethod
     def _fix_json_cols(df: pd.DataFrame, columns: List) -> pd.DataFrame:
         """
-        Private function that applies `json.loads` to any given list of
+        Private helper method that applies `json.loads` to any given list of
         columns in a provided DataFrame (``df``). Needed because Pandas cannot
         apply this particular function to multiple columns at once.
 
         .. versionadded:: 0.1.0
 
-        :param df: The DataFrame in which we want to fix the columns with
-            nested JSON data
-        :type df: :class:`pandas.DataFrame`
-        :param columns: List of the column names to process
-        :type columns: list
-        :return: The DataFrame passed in the first parameter, with JSON-loaded
-            content
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            The DataFrame in which we want to fix the columns with nested JSON
+            data
+        columns : list
+            List of the column names to process
 
+        Returns
+        -------
+        pandas.DataFrame
+            The DataFrame passed in the first parameter, with JSON-loaded
+            content
+        """
         for col in columns:
             df[col] = df[col].apply(json.loads)
 
@@ -165,20 +182,25 @@ class Utils:
 
     def _fix_columns(self, df: pd.DataFrame, fix_dict: Dict) -> pd.DataFrame:
         """
-        Private function that, for any DataFrame `df`, takes a dictionary
-        `fix_dict` structured as `{column_name: type}`, iterates over the
-        columns and applies a normative type fix.
+        Private helper method to fix column data types in a given
+        DataFrame based on a dictionary mapping column names to their
+        desired data types. This method fills missing values and coerces the
+        data types accordingly.
 
         .. versionadded:: 0.1.0
 
-        :param df: TODO
-        :type df: :class:`pandas.DataFrame`
-        :param fix_dict: TODO
-        :type fix_dict: dict
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            The input DataFrame with columns to be fixed.
+        fix_dict : dict
+            A dictionary mapping column names to their desired data types.
 
+        Returns
+        -------
+        pandas.DataFrame
+            The modified DataFrame with the specified columns fixed.
+        """
         for col, type in fix_dict.items():
             if col not in df.columns:
                 continue
@@ -204,21 +226,30 @@ class Utils:
         df: pd.DataFrame, category: str = "", max_length: int = 10000
     ) -> None:
         """
-        Private function that checks a given DataFrame (of a certain category)
-        for data in rows that exceeds a certain bytelength.
+        Private helper method to check the length of values in each cell of a
+        given DataFrame and log a warning if any cell contains a value
+        exceeding the ``max_length``. This method is useful for detecting
+        large values that could cause issues when processing or storing data.
 
         .. versionadded:: 0.1.0
 
-        :param df: TODO
-        :type df: :class:`pandas.DataFrame`
-        :param category: TODO
-        :type category: str
-        :param max_length: TODO
-        :type max_length: int
-        :return: Nothing
-        :rtype: None
-        """
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            The input DataFrame to check for cell values exceeding
+            ``max_length``.
+        category : str, optional
+            A string used for labeling the warning message. Default is an
+            empty string (``""``).
+        max_length : int, optional
+            The maximum allowed length for cell values. Default is ``10000``.
 
+        Returns
+        -------
+        None
+            The method only logs a warning if any cell value exceeds
+            ``max_length``.
+        """
         size_warning_rows = []
 
         for col in df.columns:
@@ -242,20 +273,34 @@ class Utils:
     @staticmethod
     def _max_short_col(df: pd.DataFrame, col: str) -> pd.DataFrame:
         """
-        Private function that takes any column in a DataFrame and strips the
-        column's values, while maintaining their uniqueness. Returns the
-        DataFrame back.
+        Private helper method to shorten the values in the specified column of
+        a DataFrame to the maximum common prefix length that still maintains
+        unique values. This method is useful for reducing the length of values
+        in a column while preserving uniqueness.
 
         .. versionadded:: 0.1.0
 
-        :param df: TODO
-        :type df: :class:`pandas.DataFrame`
-        :param col: TODO
-        :type col: str
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Returns
+        -------
+        pandas.DataFrame
+            The modified DataFrame with the specified column values shortened.
 
+        Example
+        -------
+        .. code-block:: python
+
+            >>> data = {
+            ...     'A': ['abcdef', 'abcghi', 'abcjkl']
+            ... }
+            >>> df = pd.DataFrame(data)
+            >>> shortened_df = _max_short_col(df, col='A')
+            >>> print(shortened_df)
+                A
+            0  abcd
+            1  abcg
+            2  abcj
+
+        """
         shortened_values = set()
 
         i = 1
@@ -281,21 +326,47 @@ class Utils:
         finish_col: str = "finished_at",
     ) -> int:
         """
-        Private function that returns the number of seconds in difference
-        between two columns in a given row.
+        Private helper method to calculate the time difference in seconds
+        between two datetime columns in a given :class:`pandas.Series` (row).
+        If the datetime conversion or calculation fails, log a warning and
+        return ``0``.
 
         .. versionadded:: 0.1.0
 
-        :param row: TODO
-        :type row: pandas.Series
-        :param start_col: TODO
-        :type start_col: str
-        :param finish_col: TODO
-        :type finish_col: str
-        :return: TODO
-        :rtype: int
-        """
+        Parameters
+        ----------
+        row : pandas.Series
+            A row from a DataFrame containing the start and finish datetime
+            columns.
+        start_col : str, optional
+            The name of the column containing the start datetime. Default is
+            ``"started_at"``.
+        finish_col : str, optional
+            The name of the column containing the finish datetime. Default is
+            ``"finished_at"``.
 
+        Returns
+        -------
+        int
+            The time difference in seconds between the start and finish
+            datetime values.
+
+        Example
+        -------
+        .. code-block:: python
+
+            >>> data = {
+            ...     'started_at': ['2021-01-01 12:00:00', '2021-01-01 12:05:00'],
+            ...     'finished_at': ['2021-01-01 12:01:00', '2021-01-01 12:09:00']
+            ... }
+            >>> df = pd.DataFrame(data)
+            >>> timediffs = df.apply(_get_timediff, axis=1)
+            >>> print(timediffs)
+            0     60
+            1    240
+            dtype: int64
+
+        """
         start_data = row[start_col]
         finish_data = row[finish_col]
         try:
@@ -318,30 +389,39 @@ class Utils:
         drop_columns: Optional[list] = None,
     ) -> None:
         """
-        Attempts to compress a provided DataFrame (``df``) and exports it into
-        CSV format, written to a file (``filename``). If a list of workflows
-        to filter is provided, only those provided in the list
-        (``filter_workflows``) will be saved in the final CSV. If a list of
-        column names is passed as an argument (``drop_columns``), those will be
-        dropped from the DataFrame before saving.
+        Export a pandas DataFrame to a CSV file with optional filtering and
+        column removal. If a column contains only one unique value, it will
+        not be exported to save space.
 
         :term:`Export`
 
         .. versionadded:: 0.1.0
 
-        :param df: The DataFrame we want to save
-        :type df: :class:`pandas.DataFrame`
-        :param filename: The filename to which we want to save the CSV, should
-            have the file suffix ``.csv``
-        :type filename: str
-        :param filter_workflows: List of Zooniverse workflows to keep in the
-            resulting CSV file
-        :type filter_workflows: list
-        :param drop_columns: List of column names to keep in the resulting CSV
-            file
-        :type drop_columns: list
-        :return: Nothing
-        :rtype: None
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            The input DataFrame to be exported.
+        filename : str
+            The output CSV file name. Note: Should have the file suffix
+            ``.csv``.
+        filter_workflows : list, optional
+            A list of Zooniverse workflow IDs to filter the DataFrame before
+            exporting. Default is ``None``, which means no filtering.
+        drop_columns : list, optional
+            A list of column names to be removed from the DataFrame before
+            exporting. Default is ``None``, which means no removal.
+
+        Returns
+        -------
+        None
+            The method exports the DataFrame to a CSV file and doesn't return
+            any value.
+
+        Raises
+        ------
+        RuntimeError
+            If the required filename parameter is missing or if the first
+            parameter is not a pandas DataFrame.
         """
 
         if filename == "":
@@ -389,18 +469,36 @@ class Utils:
         drop_columns: List = [],
     ) -> None:
         """
-        Attempts to compress classifications and exports them into CSV format.
+        Attempts to compress the project instance's classifications and
+        exports them into CSV format.
+
+        :term:`Export`
 
         .. versionadded:: 0.1.0
 
-        :param filename: TODO
-        :type filename: str
-        :param filter_workflows: TODO
-        :type filter_workflows: list
-        :param drop_columns: TODO
-        :type drop_columns: list
-        :return: Nothing
-        :rtype: None
+        Parameters
+        ----------
+        filename : str, optional
+            The output CSV file name. Note: Should have the file suffix
+            ``.csv``. Defaults to ``classifications.csv``.
+        filter_workflows : list, optional
+            A list of Zooniverse workflow IDs to filter the classifications
+            before exporting. Default is ``None``, which means no filtering.
+        drop_columns : list, optional
+            A list of column names to be removed from the classifications
+            DataFrame before exporting. Default is ``None``, which means no
+            removal.
+
+        Returns
+        -------
+        None
+            The method exports the classifications DataFrame to a CSV file and
+            doesn't return any value.
+
+        Raises
+        ------
+        RuntimeError
+            If the required filename parameter is missing.
         """
 
         self.export(
@@ -419,17 +517,36 @@ class Utils:
         drop_columns: List = [],
     ) -> None:
         """
-        Attempts to compress flattened annotations and exports them into CSV
-        format.
+        Attempts to compress the project instance's flattened annotations and
+        exports them into CSV format.
+
+        :term:`Export`
 
         .. versionadded:: 0.1.0
 
-        :param filename: TODO
-        :type filename: str
-        :param filter_workflows: TODO
-        :type filter_workflows: list
-        :param drop_columns: TODO
-        :type drop_columns: list
+        Parameters
+        ----------
+        filename : str, optional
+            The output CSV file name. Note: Should have the file suffix
+            ``.csv``. Defaults to ``annotations_flattened.csv``.
+        filter_workflows : list, optional
+            A list of Zooniverse workflow IDs to filter the annotations
+            before exporting. Default is ``None``, which means no filtering.
+        drop_columns : list, optional
+            A list of column names to be removed from the annotations
+            DataFrame before exporting. Default is ``None``, which means no
+            removal.
+
+        Returns
+        -------
+        None
+            The method exports the annotations DataFrame to a CSV file and
+            doesn't return any value.
+
+        Raises
+        ------
+        RuntimeError
+            If the required filename parameter is missing.
         """
 
         self.export(
@@ -441,16 +558,27 @@ class Utils:
 
     def export_observable(self, directory: str = "output") -> None:
         """
-        TODO
+        Export the processed classifications and annotations data to the
+        specified directory as CSV files, fit for uploading to ObservableHQ.
+        Before exporting, it converts column names to camel case (camelCase).
+        Finally, it checks if the output files exceed the allowed size and
+        logs a warning if they do.
+
+        :term:`Export`
 
         .. versionadded:: 0.1.0
+        Parameters
+        ----------
+        directory, str, optional
+            The output directory path where the CSV files will be saved.
+            Default is ``"output"``.
 
-        :param directory: TODO
-        :type directory: str
-        :return: Nothing
-        :rtype: None
+        Returns
+        -------
+        None
+            The method exports the data to CSV files and doesn't return any
+            value.
         """
-
         Path(directory).mkdir(parents=True) if not Path(
             directory
         ).exists() else None
@@ -478,7 +606,7 @@ class Utils:
                 x
                 for x in camel_classifications.columns
                 if TASK_COLUMN.search(x)
-            ],  # dropping T0, T1, etc... since those are in annotations_flattened.csv
+            ],  # dropping T0, T1, etc... since those are in annotations_flattened.csv # noqa
         )
 
         # Check for file sizes
@@ -487,8 +615,11 @@ class Utils:
             "classifications": Path(directory) / "classifications.csv",
         }.items():
             if p.stat().st_size > self.MAX_SIZE_OBSERVABLE:
+                size = round(p.stat().st_size / 1000 / 1000)
+                max_size = round(self.MAX_SIZE_OBSERVABLE / 1000 / 1000)
                 log(
-                    f"The {cat} file is too large ({round(p.stat().st_size / 1000 / 1000):,} MB). The allowed size is {round(self.MAX_SIZE_OBSERVABLE / 1000 / 1000):,} MB.",
+                    f"The {cat} file is too large ({size:,} MB). \
+                    The max allowed size is {max_size:,} MB.",
                     "WARN",
                 )
 
@@ -503,25 +634,35 @@ def get_current_dir(
     subject_id: int = 0,
 ) -> Path:
     """
-    Transforms a number of parameters into a Path, depending on the logic
-    passed in the parameters.
+    Generate a Path object representing the current directory for storing
+    downloaded files based on the specified organization options. The function
+    can organize files by workflow, by subject ID, or both.
 
     .. versionadded:: 0.1.0
 
-    :param download_dir: TODO
-    :type download_dir: str
-    :param organize_by_workflow: TODO
-    :type organize_by_workflow: bool
-    :param organize_by_subject_id: TODO
-    :type organize_by_subject_id: bool
-    :param workflow_id: TODO
-    :type workflow_id: int
-    :param subject_id: TODO
-    :type subject_id: int
-    :return: TODO
-    :rtype: pathlib.Path
-    """
+    Parameters
+    ----------
+    download_dir : str
+        The base download directory path.
+    organize_by_workflow : bool
+        If ``True``, organize files in subdirectories named after their
+        respective workflow IDs.
+    organize_by_subject_id : bool
+        If ``True``, organize files in subdirectories named after their
+        respective subject IDs.
+    workflow_id : int, optional
+        The workflow ID to be used when organizing files by workflow. Default
+        is ``0``.
+    subject_id : int, optional
+        The subject ID to be used when organizing files by subject ID. Default
+        is ``0``.
 
+    Returns
+    -------
+    pathlib.Path
+        The Path object representing the current directory based on the
+        organization options.
+    """
     if organize_by_workflow:
         # print("Organize by workflow set to TRUE.")
         if organize_by_subject_id:

@@ -39,6 +39,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "hoverxref.extension",
     "sphinx.ext.autosectionlabel",
+    "sphinx_togglebutton",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

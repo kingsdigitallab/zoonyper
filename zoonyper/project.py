@@ -21,45 +21,54 @@ from .log import log
 TODO: this is not elegant but here we are - to save `flattened[column]`
 assignment below
 """
-pd.options.mode.chained_assignment = None
+pd.options.mode.chained_assignment = None  # type:ignore
 
 
 class Project(Utils):
     """
-    The main `Project` object that controls the entire module.
+        A Zoonyper project represents a single Zooniverse project and contains
+    all of the associated data required for analysis and visualization.
 
-    You can either pass `path` as a directory that contains all five
-    required files, or a combination of all five individual files
-    (`classifications_path`, `subjects_path`, `workflows_path`,
-    `comments_path`, `tags_path`).
+    Parameters
+    ----------
+    path : str, optional
+        A directory that contains all five required files for the project:
+        ``classifications.csv``, ``subjects.csv``, ``workflows.csv``,
+        ``comments.json``, and ``tags.json``. If a path is not provided,
+        the individual file paths can be passed instead.
+    classifications_path : str, optional
+        The path to the project's classifications CSV file.
+    subjects_path : str, optional
+        The path to the project's subjects CSV file.
+    workflows_path : str, optional
+        The path to the project's workflows CSV file.
+    comments_path : str, optional
+        The path to the project's comments JSON file.
+    tags_path : str, optional
+        The path to the project's tags JSON file.
+    redact_users : bool, optional
+        Whether to redact user names in the classifications table.
+        Defaults to True.
+    trim_paths : bool, optional
+        Whether to trim file paths in columns known to contain them.
+        Defaults to True.
+    parse_dates : str, optional
+        If specified, a list of column names to be parsed as datetime objects
+        when reading the CSV files. The default value is "%Y-%m-%d", which
+        will parse columns named "created_at" and "updated_at".
 
-    :param path: General path to directory that contains all five required
-        files
-    :type path: str
-    :param classifications_path: Path to classifications CSV file,
-        optional but must be provided if no general ``path`` provided
-    :type classifications_path: str
-    :param subjects_path: Path to subjects CSV file, optional but must be
-        provided if no general ``path`` provided
-    :type subjects_path: str
-    :param workflows_path: Path to workflows CSV file, optional but must
-        be provided if no general ``path`` provided
-    :type workflows_path: str
-    :param comments_path: Path to JSON file for project comments, optional
-        but must be provided if no general ``path`` provided
-    :type comments_path: str
-    :param tags_path: Path to JSON file for project tags, optional but
-        must be provided if no general ``path`` provided
-    :type tags_path: str
-    :param redact_users: Determines whether the script will obscure user names
-        in the classifications table automatically
-    :type redact_users: bool
-    :param trim_paths: Determines whether the script will trim paths in
-        columns are known to contain paths
-    :type trim_paths: bool
-    :param parse_dates: TODO
-    :type parse_dates: str
-    :raises RuntimeError: TODO
+    Raises
+    ------
+    RuntimeError
+        If either the paths for each of the five files are not provided or a
+        general path is provided but does not contain all five files.
+
+    Notes
+    -----
+    The Project class provides a high-level interface for working with
+    Zooniverse projects. Use the attributes to access the project's data
+    as pandas DataFrames, and use the methods to manipulate the data and
+    perform analysis.
     """
 
     staff = []
@@ -143,8 +152,8 @@ class Project(Utils):
                 ]
             ):
                 raise RuntimeError(
-                    "If a general path is provided, it must contain five files: \
-                    classifications.csv, subjects.csv, workflows.csv, \
+                    "If a general path is provided, it must contain five \
+                    files: classifications.csv, subjects.csv, workflows.csv, \
                     comments.json, and tags.json"
                 )
 
@@ -161,33 +170,52 @@ class Project(Utils):
     @staticmethod
     def _user_logged_in(row: pd.Series) -> bool:
         """
-        Returns a boolean describing whether a row passed as argument contains
-        "not-logged-in" as a string.
+        Determine whether a classification was made by a logged-in user.
 
         .. versionadded:: 0.1.0
 
-        :param row: TODO
-        :type row: pandas.Series
-        :return: Describes whether a user was logged in or not
-        :rtype: bool
+        Parameters
+        ----------
+        row : pandas.Series
+            A row from the classifications DataFrame.
+
+        Returns
+        -------
+        bool
+            True if the user was logged in, False if not.
+
+        Notes
+        -----
+        This method is used internally by the ``Project`` class to determine
+        whether a classification was made by a user who was logged in to the
+        Zooniverse platform at the time of classification.
         """
         return "not-logged-in" not in row if not pd.isna(row) else False
 
     @staticmethod
     def _extract_annotation_values(annotation_row: pd.Series) -> dict:
         """
-        Takes an annotation row, which contains a list of tasks with values in
-        a dictionary {task, task_label, value} and extracts the `value` for
-        each ``task``, disregarding the ``task_label`` and returns them as a
-        dictionary, for easy insertion into a DataFrame.
+        Extract the annotation values from a classification's annotations.
 
         .. versionadded:: 0.1.0
 
-        :param annotation_row: Row, containing a list of tasks with values in
-            a dictionary
-        :type annotation_row: pandas.Series
-        :return: TODO
-        :rtype: dict
+        Parameters
+        ----------
+        annotation_row : pandas.Series
+            A row from the classifications DataFrame containing a list of tasks
+            with values in a dictionary ``{task, task_label, value}``.
+
+        Returns
+        -------
+        dict
+            A dictionary where the keys are task IDs and the values are the
+            corresponding annotation values.
+
+        Notes
+        -----
+        This method is used internally by the ``Project`` class to extract the
+        annotation values from a classification's annotations, and returns them
+        as a dictionary for easy insertion into a new DataFrame.
         """
 
         extracted_dictionaries = [
@@ -201,9 +229,19 @@ class Project(Utils):
         self, workflow_id: Optional[int] = None
     ) -> Union[Dict, int]:
         """
-        Get a count of the number of participants in a project's workflow (if
-        a ``workflow_id`` is passed) or the number of participants in each
-        workflow, described as a dictionary (if no ``workflow_id`` is passed).
+        Get a count of the number of participants who have made classifications
+        in a project's workflows.
+
+        If a ``workflow_id`` is passed, this method returns the count of unique
+        participants who made classifications in that workflow.
+
+        If no ``workflow_id`` is passed, this method returns a dictionary where
+        each key is a workflow ID and the corresponding value is the count of
+        unique participants who made classifications in that workflow.
+
+        To count the number of participants who were logged in at the time of
+        their classification in a given workflow or across the project, use the
+        `logged_in` method.
 
         .. seealso::
 
@@ -213,16 +251,25 @@ class Project(Utils):
 
         .. versionadded:: 0.1.0
 
-        :param workflow_id: A workflow ID for which you want to see the number
-            of participants, optional
-        :type workflow_id: Optional[int]
-        :raises RuntimeError: If the workflow ID specified is not recorded in
-            the project
-        :return: If a workflow ID was passed, an integer value describing the
-            participants count for that workflow will be returned, but if no
-            workflow ID was passed, a dictionary with workflow IDs as keys and
-            their participants counts as values will be returned.
-        :rtype: Union[dict, int]
+        Parameters
+        ----------
+        workflow_id : int, optional
+            The ID of a specific workflow for which to get the participant
+            count. If not specified, the participant count for each workflow
+            is returned.
+
+        Raises
+        ------
+        RuntimeError
+            If the specified ``workflow_id`` is not recorded in the project.
+
+        Returns
+        -------
+        Union[Dict, int]
+            If a ``workflow_id`` was passed, this method returns an integer
+            value describing the participant count for that workflow. If no
+            ``workflow_id`` was passed, a dictionary with workflow IDs as keys
+            and their participant counts as values is returned.
         """
 
         if workflow_id:
@@ -253,10 +300,22 @@ class Project(Utils):
 
     def logged_in(self, workflow_id: Optional[int] = None) -> Union[Dict, int]:
         """
-        Get a count of the number of logged-in participants in a project's
-        workflow (if a ``workflow_id`` is passed) or the number of
-        participants in each workflow, described as a dictionary (if no
-        ``workflow_id`` is passed).
+        Get a count of the number of participants who were logged in to the
+        Zooniverse platform at the time of their classification in a project's
+        workflows.
+
+        If a ``workflow_id`` is passed, this method returns the count of unique
+        participants who were logged in at the time of classification in that
+        workflow.
+
+        If no ``workflow_id`` is passed, this method returns a dictionary where
+        each key is a workflow ID and the corresponding value is the count of
+        unique participants who were logged in at the time of classification in
+        that workflow.
+
+        To count the total number of participants who made classifications in
+        a given workflow or across the project, use the ``participants_count``
+        method.
 
         .. seealso::
 
@@ -266,17 +325,27 @@ class Project(Utils):
 
         .. versionadded:: 0.1.0
 
-        :param workflow_id: A workflow ID for which you want to see the number
-            of participants, optional
-        :type workflow_id: Optional[int]
-        :raises RuntimeError: If the workflow ID specified is not recorded in
-            the project
-        :return: If a workflow ID was passed, an integer value describing the
-            logged-in participants count for that workflow will be returned,
-            but if no workflow ID was passed, a dictionary with workflow IDs
-            as keys and their logged-in participants counts as values will be
+        Parameters
+        ----------
+        workflow_id : int, optional
+            The ID of a specific workflow for which to get the logged-in
+            participant count. If not specified, the logged-in participant
+            count for each workflow is returned.
+
+        Raises
+        ------
+        RuntimeError
+            If the specified ``workflow_id`` is not recorded in the project.
+
+        Returns
+        -------
+        Union[Dict, int]
+            If a ``workflow_id`` was passed, this method returns an integer
+            value
+            describing the logged-in participant count for that workflow. If no
+            ``workflow_id`` was passed, a dictionary with workflow IDs as keys
+            and their corresponding logged-in participant counts as values is
             returned.
-        :rtype: Union[dict, int]
         """
 
         if workflow_id:
@@ -310,24 +379,31 @@ class Project(Utils):
     ) -> Dict[int, Dict[str, int]]:
         """
         Provides the classification count by label and subject for a
-        particular workflow, passed as a required parameter (``workflow_id``).
+        particular workflow.
 
         .. versionadded:: 0.1.0
 
-        :param workflow_id: The workflow ID for which you want to extract
-            classifications
-        :type workflow_id: int
-        :param task_number: The task number that you want to extract from
-            across the workflow
-        :type task_number: int
-        :raises KeyError: If the provided task number does not appear in any
-            classification across the project
-        :return: A dictionary with the subject ID as the key and a nested
-            dictionary as the value, which in turn has the task label as the
-            key and the classification count for that task label as the value
-        :rtype: dict[int, dict[str, int]]
-        """
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID for which you want to extract classifications.
+        task_number : int, optional
+            The task number that you want to extract from across the workflow,
+            by default ``0``.
 
+        Raises
+        ------
+        KeyError
+            If the provided task number does not appear in any classification
+            across the project.
+
+        Returns
+        -------
+        dict[int, dict[str, int]]
+            A dictionary with the subject ID as the key and a nested
+            dictionary as the value, which in turn has the task label as the
+            key and the classification count for that task label as the value.
+        """
         if f"T{task_number}" not in self.classifications.columns:
             raise KeyError(
                 f"Task number {task_number} does not appear in the \
@@ -358,16 +434,27 @@ class Project(Utils):
         self, workflow_id: int, by_workflow: bool = False
     ) -> Union[dict, list]:
         """
-        TODO
+        Return a list of logged-in participant names who contributed to the
+        specified workflow.
 
         .. versionadded:: 0.1.0
 
-        :param workflow_id: TODO
-        :type workflow_id: int
-        :param by_workflow: TODO
-        :type by_workflow: bool
-        :return: TODO
-        :rtype: Union[dict, list]
+        Parameters
+        ----------
+        workflow_id : int
+            The ID of the workflow to retrieve participants for.
+        by_workflow : bool, optional
+            Whether to return a dictionary with all workflows and their
+            participants or just a list of participants for the specified
+            workflow, by default ``False``.
+
+        Returns
+        -------
+        Union[dict, list]
+            If ``by_workflow`` is ``False`` (default), return a list of all
+            logged- in participants for the specified workflow. If
+            ``by_workflow`` is ``True``, return a dictionary with workflow IDs
+            as keys and a list of logged-in participants as values.
         """
 
         if not self._participants:
@@ -413,8 +500,10 @@ class Project(Utils):
 
         .. versionadded:: 0.1.0
 
-        :return: List of workflow IDs
-        :rtype: list
+        Returns
+        -------
+        list
+            List of workflow IDs
         """
 
         if not self._workflow_ids:
@@ -425,12 +514,16 @@ class Project(Utils):
     @property
     def subject_sets(self) -> dict:
         """
-        TODO
+        Returns a dictionary of the project's subject sets.
 
         .. versionadded:: 0.1.0
 
-        :return: TODO
-        :rtype: dict
+        Returns
+        -------
+        dict
+            A dictionary of subject sets, where the key is the subject set ID
+            and the value is a list of subjects contained within that subject
+            set.
         """
 
         if not self._subject_sets:
@@ -445,15 +538,24 @@ class Project(Utils):
 
     def workflow_subjects(self, workflow_id: int) -> list:
         """
-        TODO
+        Return a list of the subject IDs for a specific workflow ID.
 
         .. versionadded:: 0.1.0
 
-        :param workflow_id: TODO
-        :type workflow_id: TODO
-        :raises RuntimeError: TODO
-        :return: TODO
-        :rtype: TODO
+        Parameters
+        ----------
+        workflow_id : int
+            The ID of the workflow for which you want to get the subject IDs.
+
+        Raises
+        ------
+        RuntimeError
+            If the `workflow_id` argument is not an integer.
+
+        Returns
+        -------
+        list
+            A list of subject IDs for the given workflow ID.
         """
         if not isinstance(workflow_id, int):
             raise RuntimeError("workflow_id provided must be an integer")
@@ -469,29 +571,37 @@ class Project(Utils):
         organize_by_subject_id: bool = True,
     ) -> Literal[True]:
         """
-        Loops over all the project's workflows and downloads the subjects from
-        each of them.
+        Downloads all subjects for each workflow in the project.
 
-        .. seealso::
+        .. versionadded:: 0.1.0
 
-            :meth:`zoonyper.project.Project.download_workflow`, the method
-            that is called to download each individual workflow. The Project's
-            download_all_subjects method is a convenient call to this function
-            for each workflow.
+        Parameters
+        ----------
+        download_dir : str, optional
+            The directory to download the subjects into. If None, defaults to
+            the class attribute `download_dir`.
+        timeout : int, optional
+            Timeout between download attempts.
+        sleep : Tuple[int, int], optional
+            A tuple representing the amount of time to wait (in seconds)
+            between download attempts.
+        organize_by_workflow : bool
+            Whether to organize downloaded subjects by workflow.
+        organize_by_subject_id : bool
+            Whether to organize downloaded subjects by subject ID.
 
-        :param download_dir: A string representation of the path to a
-            desired download directory
-        :type download_dir: Optional[str]
-        :param timeout: TODO
-        :type timeout: int
-        :param sleep: TODO
-        :type sleep: tuple[int, int]
-        :param organize_by_workflow: TODO
-        :type organize_by_workflow: bool
-        :param organize_by_subject_id: TODO
-        :type organize_by_subject_id: bool
-        :return: Always returns True if successful
-        :rtype: bool
+        Raises
+        ------
+        FileNotFoundError
+            If `download_dir` does not exist and cannot be created.
+
+        RuntimeError
+            If the `download_dir` is not writable.
+
+        Returns
+        -------
+        True
+            If all subjects were downloaded successfully.
         """
 
         for workflow in self.workflow_ids:
@@ -517,35 +627,42 @@ class Project(Utils):
         organize_by_subject_id: bool = True,
     ) -> Literal[True]:
         """
-        Downloads the subject for a given workflow ID passed as a required
-        parameter (``workflow_id``).
+        Download all files associated with a particular workflow and store
+        them in the specified directory. The download directory defaults to
+        the value set for the ``download_dir`` parameter in the ``Project``
+        constructor.
 
         .. versionadded:: 0.1.0
 
-        :param workflow_id: The workflow ID that will be downloaded
-        :type workflow_id: int
-        :param download_dir: A string representation of a path to a desired
-            download directory, optional
-        :type download_dir: Optional[str]
-        :param timeout: A timeout passed to :func:`requests.get`
-        :type timeout: int
-        :param sleep: A tuple defining the low and the high boundary, passed
-            on to the :meth:`random.randint` to select a random number of
-            seconds to sleep between downloads, optional
-        :type sleep: Optional[tuple[int, int]]
-        :param organize_by_workflow: Determines whether downloaded subjects
-            will be organised by workflow ID in the download directory,
-            defaults to ``True``
-        :type organize_by_workflow: bool
-        :param organize_by_subject_id: Determines whether downloaded subjects
-            will be organised by subject ID in the download directory,
-            defaults to ``True``
-        :type organize_by_subject_id: bool
-        :raises SyntaxError: If the workflow ID passed is not an integer
-        :return: Always returns True if successful
-        :rtype: bool
-        """
+        Parameters
+        ----------
+        workflow_id : int
+            The ID of the workflow to download files for.
+        download_dir : str, optional
+            The directory to store downloaded files in. If not specified, uses
+            the `download_dir` parameter set in the `Project` constructor.
+        timeout : int, optional
+            The time in seconds to wait for the server to respond before
+            timing out.
+        sleep : tuple, optional
+            A tuple containing the range of time to sleep for between file
+            downloads, in seconds.
+        organize_by_workflow : bool, optional
+            Whether to organize downloaded files by workflow ID.
+        organize_by_subject_id : bool, optional
+            Whether to organize downloaded files by subject ID.
 
+        Raises
+        ------
+        SyntaxError
+            If ``workflow_id`` is not an integer.
+
+        Returns
+        -------
+        True
+            Returns ``True`` if all files have been successfully downloaded and
+            saved.
+        """
         if not download_dir:
             download_dir = self.download_dir
 
@@ -599,37 +716,48 @@ class Project(Utils):
     @property
     def inactive_workflow_ids(self) -> list:
         """
-        Returns a sorted list of all inactive workflows.
+        Get a sorted list of unique workflow IDs, marked as inactive in the
+        project's ``workflows`` DataFrame.
 
         .. versionadded:: 0.1.0
 
-        :return: List of inactive workflow IDs
-        :rtype: list
+        Returns
+        -------
+        list
+            A list of inactive workflow IDs.
         """
-
         lst = list(
-            {
+            set(
                 workflow_id  # TODO: add str() here? Test...
                 for workflow_id, _ in self.workflows.query(
                     "active==False"
                 ).iterrows()
-            }
+            )
         )
 
         return sorted(lst)
 
     def get_workflow_timelines(self, include_active: bool = True) -> list:
         """
-        TODO
+        Get the start and end dates for each workflow, and indicate whether
+        they are active.
 
         .. versionadded:: 0.1.0
 
-        :param include_active: TODO
-        :type include_active: bool
-        :return: TODO
-        :rtype: list
-        """
+        Parameters
+        ----------
+        include_active : bool
+            A boolean indicating whether active workflows should be included
+            (``True``) or only inactive workflows (``False``). Defaults to
+            ``True``.
 
+        Returns
+        -------
+        list of dictionaries
+            A list of dictionaries, where each dictionary has keys:
+            "workflow_id", "start_date", "end_date", and "active", which
+            describe each workflow.
+        """
         if not self._workflow_timeline:
             all_workflows = self.workflow_ids
             inactive_workflows = self.inactive_workflow_ids
@@ -663,15 +791,27 @@ class Project(Utils):
 
     def get_comments(self, include_staff: bool = True) -> pd.DataFrame:
         """
-        TODO
+        Get comments for the project.
 
         .. versionadded:: 0.1.0
 
-        :param include_staff: TODO
-        :type include_staff: bool
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
+        Parameters
+        ----------
+        include_staff : bool
+            Include staff comments or not, defaults to ``True``.
+
+        Raises
+        ------
+        ValueError
+            If ``include_staff`` is ``False`` but ``staff`` property is not
+            set (using ``set_staff`` method).
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing comments for the project
         """
+
         if not include_staff:
             if not self.staff:
                 log(
@@ -688,38 +828,85 @@ class Project(Utils):
 
         return self.comments
 
-    def get_subject_comments(self, subject_id) -> pd.DataFrame:
+    def get_subject_comments(
+        self, subject_id, include_staff: bool = True
+    ) -> pd.DataFrame:
         """
-        TODO
+        Returns all comments made on a specific subject by users, including
+        staff if specified.
 
         .. versionadded:: 0.1.0
 
-        :param subject_id: TODO
-        :type subject_id: TODO
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
+        Parameters
+        ----------
+        subject_id : int or str
+            The ID of the subject you want to retrieve comments for
+        include_staff : bool
+            Whether or not to include comments made by staff members. If
+            ``False``, only comments made by non-staff users will be returned.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing all comments made on the specified subject
         """
+        query = f"focus_type=='Subject' & focus_id=={subject_id}"
 
-        return self.comments.query(
-            f"focus_type=='Subject' & focus_id=={subject_id}"
-        )
+        if not include_staff:
+            if not self.staff:
+                log(
+                    "Staff is not set, so `include_staff` set to False has no \
+                    effects. Use .set_staff method to enable this feature.",
+                    "WARN",
+                )
+            query += (
+                " & user_login != '"
+                + "' & user_login != '".join(self.staff)
+                + "'"
+            )
 
-    def set_staff(self, staff):
+        return self.comments.query(query)
+
+    def set_staff(self, staff: list) -> None:
+        """
+        Set the staff members for the project.
+
+        .. versionadded:: 0.1.0
+
+        Parameters
+        ----------
+        staff : list[str]
+            A list of staff member usernames.
+
+        Returns
+        -------
+        None
+        """
         self.staff = staff
 
     def load_frame(self, name: str) -> pd.DataFrame:
         """
-        TODO
+        Load the raw dataframe specified by ``name`` and return it. If it is not
+        loaded yet, then load it first and store it in the ``_raw_frames``
+        dictionary of the instance.
 
         .. versionadded:: 0.1.0
 
-        :param name: TODO
-        :type name: str
-        :raises SyntaxError: TODO
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Parameters
+        ----------
+        name : str
+            The name of the raw dataframe to load.
 
+        Returns
+        -------
+        pandas.DataFrame
+            The loaded raw dataframe specified by `name`.
+
+        Raises
+        ------
+        SyntaxError
+            If `name` is not one of the valid raw dataframe names.
+        """
         if not self._raw_frames:
             self._raw_frames = {}
 
@@ -856,14 +1043,22 @@ class Project(Utils):
     @property
     def frames(self) -> Dict[str, pd.DataFrame]:
         """
-        TODO
+        Get all the frames (classifications, subjects, workflows, comments,
+        and tags).
 
         .. versionadded:: 0.1.0
 
-        :return: TODO
-        :rtype: dict[str, :class:`pandas.DataFrame`]
-        """
+        Raises
+        ------
+        SyntaxError
+            If the provided name is not one of the allowed options.
 
+        Returns
+        -------
+        Dict[str, pandas.DataFrame]
+            A dictionary with the frames' names as keys and the pandas
+            DataFrame as values.
+        """
         existing_frames = list(self._raw_frames.keys())
 
         if not all(
@@ -903,16 +1098,23 @@ class Project(Utils):
 
     def _preprocess(self, df: pd.DataFrame, date_cols: list) -> pd.DataFrame:
         """
-        TODO
+        Preprocesses a pandas DataFrame by converting specified columns to a
+        given date format.
 
         .. versionadded:: 0.1.0
 
-        :param df: TODO
-        :type df: :class:`pandas.DataFrame`
-        :param date_cols: TODO
-        :type date_cols: list
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            The input DataFrame to be preprocessed.
+        date_cols : list
+            A list of column names to be converted to the specified date
+            format.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The preprocessed DataFrame.
         """
         if not self.parse_dates:
             return df
@@ -926,15 +1128,27 @@ class Project(Utils):
     @property
     def comments(self) -> pd.DataFrame:
         """
-        Provides access to the project's comments JSON file interpreted as a
-        :class:`pandas.DataFrame`.
+        Returns a preprocessed DataFrame of the project's comments.
 
         .. versionadded:: 0.1.0
 
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Returns
+        -------
+        pd.DataFrame
+            A pandas DataFrame containing the comments data.
 
+        Notes
+        -----
+        - The DataFrame is loaded from the "comments" file.
+        - The "comment_focus_id", "comment_user_id", "comment_created_at",
+          "comment_focus_type", "comment_user_login" and "comment_body"
+          columns are renamed to "focus_id", "user_id", "created_at",
+          "focus_type", "user_login", and "body" respectively.
+        - The "board_id", "discussion_id", "board_title", "board_description"
+          and "discussion_title" columns are dropped from the DataFrame.
+        - Duplicate data from comments is dropped.
+        - The data is preprocessed if the `parse_dates` attribute is True.
+        """
         date_cols = ["created_at"]
 
         if not isinstance(self._comments, pd.DataFrame):
@@ -973,15 +1187,25 @@ class Project(Utils):
     @property
     def tags(self) -> pd.DataFrame:
         """
-        Provides access to the project's tags JSON file interpreted as a
-        :class:`pandas.DataFrame`.
+        Returns a preprocessed DataFrame of the project's tags.
 
         .. versionadded:: 0.1.0
 
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Returns
+        -------
+        pandas.DataFrame
+            A preprocessed DataFrame of tags.
 
+        Notes
+        -----
+        The returned DataFrame is generated from the raw tags JSON data by
+        performing the following steps:
+            - Joining the tags and comments frames
+            - Dropping duplicate information from the tags frame
+            - Preprocessing date columns using the `_preprocess` method
+
+        The DataFrame is cached to reduce load times on subsequent calls.
+        """
         date_cols = ["created_at"]
 
         if not isinstance(self._tags, pd.DataFrame):
@@ -1006,15 +1230,24 @@ class Project(Utils):
     @property
     def boards(self) -> pd.DataFrame:
         """
-        Provides access to the project's boards by interpreting some of the
-        comments JSON file as a :class:`pandas.DataFrame`.
+        Returns a preprocessed DataFrame of the project's discussion boards.
 
         .. versionadded:: 0.1.0
 
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Returns
+        -------
+        pandas.DataFrame
+            A preprocessed DataFrame of discussion boards.
 
+        Notes
+        -----
+        The returned DataFrame is generated from the raw comments JSON data by
+        performing the following steps:
+            - Extracting the boards from the comments frame
+            - Dropping duplicate information from the boards frame
+
+        The DataFrame is cached to reduce load times on subsequent calls.
+        """
         date_cols = []
 
         if not isinstance(self._boards, pd.DataFrame):
@@ -1033,15 +1266,24 @@ class Project(Utils):
     @property
     def discussions(self) -> pd.DataFrame:
         """
-        Provides access to the project's discussions  by interpreting some of the
-        comments JSON file as a :class:`pandas.DataFrame`.
+        Returns a preprocessed DataFrame of the project's discussions.
 
         .. versionadded:: 0.1.0
 
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Returns
+        -------
+        pandas.DataFrame
+            A preprocessed DataFrame of discussions.
 
+        Notes
+        -----
+        The returned DataFrame is generated from some of the raw comments JSON
+        data by performing the following steps:
+            - Extracting the discussions from the comments frame
+            - Dropping duplicate information from the discussions frame
+
+        The DataFrame is cached to reduce load times on subsequent calls.
+        """
         date_cols = []
 
         if not isinstance(self._discussions, pd.DataFrame):
@@ -1060,15 +1302,17 @@ class Project(Utils):
     @property
     def workflows(self) -> pd.DataFrame:
         """
-        Provides access to the project's workflows CSV file interpreted as a
-        :class:`pandas.DataFrame`.
+        Returns a DataFrame of the project's workflows.
 
         .. versionadded:: 0.1.0
 
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame of workflows.
 
+        The DataFrame is cached to reduce load times on subsequent calls.
+        """
         date_cols = []
 
         if not isinstance(self._workflows, pd.DataFrame):
@@ -1082,15 +1326,30 @@ class Project(Utils):
     @property
     def subjects(self) -> pd.DataFrame:
         """
-        Provides access to the project's subjects CSV file interpreted as a
-        :class:`pandas.DataFrame`.
+        Returns a preprocessed DataFrame of the project's subjects.
+
+        Issues a warning for non-disambiguated subjects if the
+        :meth:`zoonyper.project.Project.disambiguate_subjects` method has not been run
+        on the project instance.
 
         .. versionadded:: 0.1.0
 
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Returns
+        -------
+        pandas.DataFrame
+            A preprocessed DataFrame of subjects.
 
+        Notes
+        -----
+        The returned DataFrame is generated from some of the raw subjects CSV
+        data by performing the following steps:
+            - Extracting the nested metadata JSON from the metadata column
+            - Joining the extracted metadata back on the subjects DataFrame
+            - Dropping the metadata column
+            - Preprocessing date columns using the `_preprocess` method
+
+        The DataFrame is cached to reduce load times on subsequent calls.
+        """
         date_cols = ["created_at", "updated_at", "retired_at"]
 
         if not isinstance(self._subjects, pd.DataFrame):
@@ -1148,15 +1407,39 @@ class Project(Utils):
     @property
     def classifications(self) -> pd.DataFrame:
         """
-        Provides access to the project's classifications CSV file interpreted
-        as a :class:`pandas.DataFrame`.
+        Returns a preprocessed DataFrame of the project's classifications.
 
         .. versionadded:: 0.1.0
 
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
-        """
+        Returns
+        -------
+        pandas.DataFrame
+            A preprocessed DataFrame of classifications.
 
+        Notes
+        -----
+        The returned DataFrame is generated from some of the raw
+        classifications CSV data by performing the following steps:
+            - Extracting the nested metadata JSON from the metadata column
+            - Creating a new "seconds" column, denoting the seconds it took
+              for the user to classify the subject(s) and dropping the original
+              data used for the operation
+            - Joining the extracted metadata back on the classifications
+              DataFrame
+            - Extracting the nested annotations data from the annotations
+              column
+            - Extracting all single list values as values in the annotations
+              column
+            - Joining the extracted and processed annotations back on the
+              classifications DataFrame
+            - Reduce the length of user names, user IP addresses and session
+              identifiers to the shortest possible, while maintaining
+              uniqueness
+            - Dropping the metadata and annotations column
+            - Preprocessing date columns using the `_preprocess` method
+
+        The DataFrame is cached to reduce load times on subsequent calls.
+        """
         date_cols = ["created_at"]
 
         if not isinstance(self._classifications, pd.DataFrame):
@@ -1243,16 +1526,20 @@ class Project(Utils):
 
         .. versionadded:: 0.1.0
 
-        :param workflow_id: The workflow ID, which will filter the
-            classifications, if provided, optional.
-        :type workflow_id: Optional[Union[int, str]]
-        :return: A list of dictionaries which have two keys, "date" and
-            "close", where close counts the classifications present in the
-            filtered classifications DataFrame at any given date in the
-            classifications DataFrame's date range.
-        :rtype: list[dict[str, Union[str, int]]]
-        """
+        Parameters
+        ----------
+        workflow_id : Optional[Union[int, str]]
+            The workflow ID, which will filter the classifications, if
+            provided, optional.
 
+        Returns
+        -------
+        list[dict[str, Union[str, int]]]
+            A list of dictionaries which have two keys, "date" and "close",
+            where close counts the classifications present in the filtered
+            classifications DataFrame at any given date in the classifications
+            DataFrame's date range.
+        """
         if not workflow_id:
             subframe = self.classifications
         else:
@@ -1291,24 +1578,25 @@ class Project(Utils):
 
         .. versionadded:: 0.1.0
 
-        :return: A dictionary with the project's workflow IDs as keys (as well
-            as a cross-project, "All workflows" key) and, as values, a list of
+        Returns
+        -------
+        dict
+            A dictionary with the project's workflow IDs as keys (as well as a
+            cross-project, "All workflows" key) and, as values, a list of
             dictionaries for each workflow (and the entire project) which have
             two keys, "date" and "close", where close counts the
             classifications present in the filtered classifications DataFrame
             at any given date in the classifications DataFrame's date range.
-        :rtype: dict
         """
-
-        o = {
+        dic = {
             workflow_id: self.get_classifications_for_workflow_by_dates(
                 workflow_id
             )
             for workflow_id in self.workflow_ids
         }
-        o["All workflows"] = self.get_classifications_for_workflow_by_dates()
+        dic["All workflows"] = self.get_classifications_for_workflow_by_dates()
 
-        return o
+        return dic
 
     def plot_classifications(
         self,
@@ -1325,23 +1613,32 @@ class Project(Utils):
 
             :meth:`zoonyper.project.Project.get_classifications_for_workflow_by_dates`,
             the method that is used to generate the growth of classifications.
-            The ``workflow_id`` passed to the plot_classifications method is
-            passed on as-is.
+            The ``workflow_id`` passed to the ``plot_classifications`` method
+            is passed on as-is.
 
         .. versionadded:: 0.1.0
 
-        :param workflow_id: Any workflow ID from the project, which can be
-            used for filtering
-        :type workflow_id: int
-        :param width: Figure width in inches, default: 15
-        :type width: int
-        :param height: Figure height in inches, default: 5
-        :type height: int
-        :raises SyntaxError: If width and height are not provided as integers
-        :return: A line plot showing the growth of classifications
-        :rtype: :class:`matplotlib.figure.Figure`
-        """
+        Parameters
+        ----------
+        workflow_id : int
+            Any workflow ID from the project, which can be used for filtering
 
+        width : int
+            Figure width in inches, default: 15
+
+        height : int
+            Figure height in inches, default: 5
+
+        Raises
+        ------
+        SyntaxError
+            If width or height are not provided as integers
+
+        Returns
+        -------
+        matplotlib.figure.Figure
+            A line plot showing the growth of classifications
+        """
         if not isinstance(width, int) or not isinstance(height, int):
             raise SyntaxError("Width and height must be provided as integers")
 
@@ -1375,14 +1672,22 @@ class Project(Utils):
 
         .. versionadded:: 0.1.0
 
-        :param include_columns: The list of columns to preserve from the
-            classifications DataFrame, default: ``["workflow_id",
-            "workflow_version", "subject_ids"]``
-        :type include_columns: list[str]
-        :raises NotImplementedError: If a type of data is encountered that
-            cannot be interpreted by the script
-        :return: TODO
-        :rtype: :class:`pandas.DataFrame`
+        Parameters
+        ----------
+        include_columns : list[str]
+            The list of columns to preserve from the classifications DataFrame,
+            default: ``["workflow_id", "workflow_version", "subject_ids"]``
+
+        Raises
+        ------
+        NotImplementedError
+            If a type of data is encountered that cannot be interpreted by the
+            script
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame with the flattened annotations.
         """
 
         def extract_values(x):
@@ -1459,30 +1764,65 @@ class Project(Utils):
         self, downloads_directory: Optional[str] = None
     ) -> pd.DataFrame:
         """
-        TODO
+        Disambiguates subjects by identifying unique files based on their MD5
+        hashes and assigns a unique identifier to each disambiguated subject.
+
+        The method scans through the files in the specified
+        ``downloads_directory``, computes MD5 hashes of the files, and updates
+        the subjects' DataFrame with disambiguated subject IDs. If the method
+        has already been run, the previously disambiguated subjects' DataFrame
+        is returned.
 
         .. versionadded:: 0.1.0
 
-        :param downloads_directory: The file path to an existing directory
-            where the downloads from the method will be saved
-        :type downloads_directory: Optional[str]
-        :raises RuntimeError: TODO
-        :return: The disambiguated subjects' DataFrame
-        :rtype: :class:`pandas.DataFrame`
+        Parameters
+        ----------
+        downloads_directory : str, optional
+            The file path to an existing directory where the downloads from
+            the method will be saved. If not specified, the default
+            `download_dir` will be used. Defaults to ``None``.
+
+        Raises
+        ------
+        RuntimeError
+            If the provided ``downloads_directory`` is invalid or not provided.
+
+            If the download directory is empty.
+
+            If there are multiple files with the same name but different
+            hashes.
+
+            If not all subjects have been properly downloaded.
+
+        Returns
+        -------
+        pd.DataFrame
+            The disambiguated subjects' DataFrame with an additional
+            ``"subject_id_disambiguated"`` column containing unique identifiers
+            for each disambiguated subject.
         """
 
         def get_all_files(directory: str):
             """
-            Walks through a directory and returns files. Could be done with
-            pathlib.Path.rglob method but this is (surprisingly) a lot faster
-            (525 ms vs 2.81 s).
+            Walks through a directory and returns files.
 
             .. versionadded:: 0.1.0
 
-            :param directory: TODO
-            :type directory: str
-            :return: TODO
-            :rtype: TODO
+            Parameters
+            ----------
+            directory : str
+                The path of the directory to walk through.
+
+            Returns
+            -------
+            dict
+                A dictionary where the keys are file names and the values are
+                lists containing the directories where the files are located.
+
+            Notes
+            -----
+            Could have been done with :meth:`pathlib.Path.rglob` method but
+            this was (surprisingly) a lot faster: 525 ms vs 2.81 s.
             """
 
             all_files = {}
@@ -1498,16 +1838,24 @@ class Project(Utils):
 
         def get_md5(path: str):
             """
-            From https://github.com/Living-with-machines/zooniverse-data-analysis/blob/main/identifying-double-files.ipynb
+            Computes the MD5 hash of a file.
 
             .. versionadded:: 0.1.0
 
-            :param path: TODO
-            :type path: str
-            :return: TODO
-            :rtype: TODO
-            """
+            Parameters
+            ----------
+            path : str
+                The path of the file to compute the MD5 hash for.
 
+            Returns
+            -------
+            str
+                The computed MD5 hash in hexadecimal format.
+
+            Notes
+            -----
+            The function is borrowed from https://bit.ly/3TvUrd1.
+            """
             md5_hash = hashlib.md5()
 
             with open(path, "rb") as f:
@@ -1541,17 +1889,25 @@ class Project(Utils):
             )
 
         # Get hashes by file
-        def get_hashes_by_file() -> Dict:
+        def get_hashes_by_file() -> Dict[str, str]:
             """
-            Get a hash dictionary for all files in downloads_directory.
+            Scans the files in the downloads_directory, computes their MD5
+            hashes, and returns a dictionary mapping filenames to their unique
+            MD5 hashes. Raises a RuntimeError if the downloads_directory is
+            empty or if there are multiple files with the same name but
+            different hashes.
 
-            .. versionadded:: 0.1.0
+            Raises
+            ------
+            RuntimeError
+                If the downloads_directory is empty or if there are multiple
+                files with the same name but different hashes.
 
-            :raises RuntimeError: TODO
-            :return: TODO
-            :rtype: TODO
+            Returns
+            -------
+            hashes_by_file : Dict[str, str]
+                A dictionary mapping filenames to their unique MD5 hashes.
             """
-
             # Get all files from downloads_directory
             all_files = get_all_files(downloads_directory)
 
@@ -1564,7 +1920,8 @@ class Project(Utils):
                     get_md5(os.path.join(path, filename)) for path in paths
                 }
 
-            # Test to ensure that there are not multiple files with same name but different hashes
+            # Test to ensure that there are not multiple files with same name
+            # but different hashes
             if [x for x, y in hashes_by_file.items() if len(y) > 1]:
                 raise RuntimeError(
                     "Looks like there are files with the same name that are \
@@ -1582,6 +1939,9 @@ class Project(Utils):
             return hashes_by_file
 
         self.hashes_by_file = get_hashes_by_file()
+
+        if not isinstance(self._subjects, pd.DataFrame):
+            self.subjects
 
         # Set up new columns to check for filenames + hashes across subjects
         self._subjects["filenames"] = self._subjects.apply(
@@ -1635,15 +1995,35 @@ class Project(Utils):
         self, subject_id: int
     ) -> Union[List, int]:
         """
-        TODO
+        Retrieves the disambiguated subject ID for a given subject ID.
+
+        The method returns the disambiguated subject ID associated with the
+        provided subject ID. It raises a RuntimeError if the subjects have not
+        been disambiguated using the
+        :meth:`zoonyper.project.Project.disambiguate_subjects` method.
 
         .. versionadded:: 0.1.0
 
-        :param subject_id: TODO
-        :type subject_id: int
-        :raises RuntimeError: TODO
-        :return: TODO
-        :rtype: TODO
+        Parameters
+        ----------
+        subject_id : int
+            The subject ID for which the disambiguated subject ID is to be
+            retrieved.
+
+        Raises
+        ------
+        RuntimeError
+            If the subjects have not been disambiguated using the
+            :meth:`zoonyper.project.Project.disambiguate_subjects` method.
+
+        Returns
+        -------
+        Union[List, int]
+            The disambiguated subject ID associated with the provided subject
+            ID. If the subject ID is not found in the subjects DataFrame,
+            returns 0. If multiple disambiguated subject IDs are associated
+            with the provided subject ID, returns a list of unique
+            disambiguated subject IDs.
         """
         self.SUPPRESS_WARN = True  # Set warning suppression
 
@@ -1679,12 +2059,19 @@ class Project(Utils):
     @property
     def subject_urls(self):
         """
-        TODO
+        Retrieves a list of all subject URLs.
+
+        The property compiles a list of URLs from the ``subjects`` DataFrame's
+        ``locations`` column. If the ``_subject_urls`` attribute is empty, the
+        method first ensures that the ``subjects`` DataFrame is set up.
 
         .. versionadded:: 0.1.0
 
-        :return: TODO
-        :rtype: TODO
+        Returns
+        -------
+        list
+            A list of all subject URLs from the ``locations`` column of the
+            ``subjects`` DataFrame.
         """
         if not self._subject_urls:
             # Ensure subjects is set up
@@ -1705,18 +2092,35 @@ class Project(Utils):
         organize_by_subject_id: bool = True,
     ):
         """
-        TODO
+        Retrieves a list of file paths for all subjects, organized by
+        workflow and/or subject ID as specified.
+
+        The method generates a list of file paths for each subject based on
+        the given organization options. It can take into account the workflow
+        ID, subject ID, and subject file name to create the file paths.
 
         .. versionadded:: 0.1.0
 
-        :param downloads_directory: TODO
-        :type downloads_directory: str
-        :param organize_by_workflow: TODO
-        :type organize_by_workflow: bool
-        :param organize_by_subject_id: TODO
-        :type organize_by_subject_id: bool
-        :return: TODO
-        :rtype: TODO
+        Parameters
+        ----------
+        downloads_directory : str, optional
+            The file path to the directory where the subjects are downloaded.
+            If not specified (default), the Project's ``download_dir``
+            property will be used.
+
+        organize_by_workflow : bool, optional
+            If ``True`` (default), organizes the subject file paths by
+            including the workflow ID in the path.
+
+        organize_by_subject_id : bool, optional
+            If ``True`` (default), organizes the subject file paths by
+            including the subject ID (name) in the path.
+
+        Returns
+        -------
+        list
+            A list of file paths for all subjects, organized based on the
+            specified options.
         """
 
         def get_locations(
@@ -1726,19 +2130,44 @@ class Project(Utils):
             organize_by_subject_id: bool = True,
         ):
             """
-            TODO
+            Retrieves a list of file paths for a given subject row, organized
+            by workflow and/or subject ID as specified.
+
+            This nested function generates a list of file paths for the subject
+            in the given DataFrame row based on the specified organization
+            options. It takes into account the workflow ID, subject ID, and
+            subject file name to create the file paths.
 
             .. versionadded:: 0.1.0
 
-            :param downloads_directory: TODO
-            :type downloads_directory: str
-            :param organize_by_workflow: TODO
-            :type organize_by_workflow: bool
-            :param organize_by_subject_id: TODO
-            :type organize_by_subject_id: bool
-            :raises RuntimeError: TODO
-            :return: TODO
-            :rtype: TODO
+            Parameters
+            ----------
+            row : pd.Series
+                A row from the subjects DataFrame containing subject metadata.
+
+            downloads_directory : str, optional
+                The file path to the directory where the subjects are
+                downloaded. If not specified (default), the Project's
+                ``download_dir`` property will be used.
+
+            organize_by_workflow : bool, optional
+                If ``True`` (default), organizes the subject file paths by
+                including the workflow ID in the path.
+
+            organize_by_subject_id : bool, optional
+                If ``True`` (default), organizes the subject file paths by
+                including the subject ID (name) in the path.
+
+            Raises
+            ------
+            RuntimeError
+                If an unknown error occurs in the function.
+
+            Returns
+            -------
+            list
+                A list of file paths for the given subject row, organized based
+                on the specified options.
             """
             paths = []
 
