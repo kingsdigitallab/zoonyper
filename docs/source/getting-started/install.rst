@@ -70,5 +70,6 @@ If you are in a hurry and want to install the developer version in whichever Pyt
     curl -sSL https://install.python-poetry.org | python - &&
     if [ ! -d "zoonyper" ] ; then git clone git@github.com:Living-with-machines/zoonyper.git; fi &&
     cd zoonyper &&
+    poetry shell &&
     poetry build &&
     pip install dist/zoonyper-0.1.0.tar.gz
