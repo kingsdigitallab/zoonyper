@@ -666,6 +666,8 @@ class Project(Utils):
         if not download_dir:
             download_dir = self.download_dir
 
+        Path(download_dir).mkdir(parents=True, exist_ok=True)
+
         if not isinstance(workflow_id, int):
             raise SyntaxError("workflow_id provided must be an integer")
 
@@ -886,8 +888,8 @@ class Project(Utils):
 
     def load_frame(self, name: str) -> pd.DataFrame:
         """
-        Load the raw dataframe specified by ``name`` and return it. If it is not
-        loaded yet, then load it first and store it in the ``_raw_frames``
+        Load the raw dataframe specified by ``name`` and return it. If it is
+        not loaded yet, then load it first and store it in the ``_raw_frames``
         dictionary of the instance.
 
         .. versionadded:: 0.1.0
@@ -1329,8 +1331,8 @@ class Project(Utils):
         Returns a preprocessed DataFrame of the project's subjects.
 
         Issues a warning for non-disambiguated subjects if the
-        :meth:`zoonyper.project.Project.disambiguate_subjects` method has not been run
-        on the project instance.
+        :meth:`zoonyper.project.Project.disambiguate_subjects` method has not
+        been run on the project instance.
 
         .. versionadded:: 0.1.0
 
@@ -1727,7 +1729,7 @@ class Project(Utils):
 
             elif isinstance(x, dict):
                 values = []
-                if len(x.get("details"), []) == 1:
+                if len(x.get("details", [])) == 1:
                     values.append(str(x.get("details", [])[0].get("value")))
 
                 return "|".join([x for x in values if x])
