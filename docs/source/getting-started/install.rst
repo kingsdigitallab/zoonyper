@@ -39,6 +39,12 @@ Once it has been cloned, navigate into the newly created local repository:
 
     $ cd zoonyper
 
+First, you will want to activate Poetry's shell:
+
+.. code-block:: bash
+
+    $ poetry shell
+
 Following that, you can run a build and ``pip install`` from the local files:
 
 .. code-block:: bash
