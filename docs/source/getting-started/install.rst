@@ -45,6 +45,12 @@ First, you will want to activate Poetry's shell:
 
     $ poetry shell
 
+Then, install the dependencies:
+
+.. code-block:: bash
+
+    $ poetry install
+
 Following that, you can run a build and ``pip install`` from the local files:
 
 .. code-block:: bash
