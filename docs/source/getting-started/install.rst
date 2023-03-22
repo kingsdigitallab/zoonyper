@@ -27,6 +27,10 @@ In order to do so, you need to first ensure that you have installed Poetry:
 
     Make sure the command above, after the pipe ``|`` refers to the correctly linked Python, i.e. you may want it to refer to ``python`` or ``python3`` or whatever your symlinked binary is called.
 
+.. note::
+
+    Don't forget to add `export PATH="/home/<username>/.local/bin:$PATH"` to your shell configuration file in order to get access to the ``poetry`` tool on your command line.
+
 Then, clone the repository:
 
 .. code-block:: bash
