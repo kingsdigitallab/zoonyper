@@ -69,7 +69,7 @@ Once you've downloaded and organized the necessary files for your Zoonyper proje
 That's it! You've now successfully initialized a Zoonyper project with your downloaded files.
 
 .. note::
-  
+
   If you are interested in alternative ways to set up a project, check out the :ref:`loading a project` tutorial. (The method shown here is equivalent to :ref:`"Option 2: Specifying directory with required files" <loading-project-option-2>`)
 
 Disambiguating subjects (Optional)
@@ -85,11 +85,23 @@ To disambiguate the subjects in your Zoonyper project, follow these steps:
 
      $ mkdir input-directory/downloads/
 
-#. Call the ``.disambiguate_subjects()`` method on your ``Project`` object and pass in the download directory as its argument:
+#. Now, download all the subject files from your project:
 
    .. code-block:: python
 
-     project.disambiguate_subjects("input-directory/downloads/")
+     project.download_all_subjects(sleep=(0, 1), organize_by_workflow=False, organize_by_subject_id=False)
+
+   Note that this step will take some time as you will have to download every single subject processed in your project. Depending on how many subjects you have across all your workflows, it may take several hours.
+
+   By setting the ``sleep=(0, 1)`` parameter, we allow the method to sleep a random number between 0 and 1 in-between each download. If you keep running into timeout errors, you can increase these numbers to see if it helps.
+
+   Setting ``organize_by_workflow=False`` and ``organize_by_subject_id=False`` will organize the downloaded files as a flat structure in the downloads folder.
+
+#. Next, call the ``.disambiguate_subjects()`` method on your ``Project`` object and pass in the download directory as its argument:
+
+   .. code-block:: python
+
+     project.disambiguate_subjects()
 
    This method will download each subject image and extract its unique identifier, which will be stored in the project's metadata. Note that this process may take some time depending on the number of subjects in your project.
 
