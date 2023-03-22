@@ -90,6 +90,7 @@ class Project(Utils):
     _flattened = None
 
     download_dir = "downloads"
+    SUPPRESS_WARN = False
 
     def __init__(
         self,
