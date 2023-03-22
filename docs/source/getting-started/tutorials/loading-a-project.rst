@@ -65,7 +65,7 @@ Here's what each line of code does:
 * ``project = Project(...)``: Creates a ``Project`` object using the specified file paths.
 
 Option 2: Specifying directory with required files
-------------------------------------------
+--------------------------------------------------
 
 In the example above, if all the required files (``classifications.csv``, ``subjects.csv``, ``workflows.csv``, ``comments.json`` and ``tags.json``) are located in the same path, you can just provide the path where all of them are located:
 
