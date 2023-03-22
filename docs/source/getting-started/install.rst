@@ -55,6 +55,24 @@ Then, install the dependencies:
 
     $ poetry install
 
+.. note::
+
+    You may run into an issue here, with the installation of ``furo``:
+
+    .. code-block:: bash
+
+        • Installing furo (2022.12.7): Failed
+
+            _WheelFileValidationError
+
+            ["In /home/<username>/.cache/pypoetry/artifacts/38/be/e4/0afbe5654cdc0168ebfaf6864c20009c2eec3dd953961a7d44e0ed3fe9/furo-2022.12.7-py3-none-any.whl, hash / size of furo/__init__.py didn't match RECORD", "In /home/<username>/.cache/pypoetry/artifacts/38/be/e4/0afbe5654cdc0168ebfaf6864c20009c2eec3dd953961a7d44e0ed3fe9/furo-2022.12.7-py3-none-any.whl, hash / size of furo/_demo_module.py didn't match RECORD", ... [etc]
+
+    If this is the case, see the solution here: https://github.com/python-poetry/poetry/issues/7691#issue-1632193622
+
+    The easiest solution is to exit poetry (by running ``exit`` and running a ``pip install poetry==1.4.0``).
+
+    This is a problem with poetry 1.4.1 so it may be solved by the time you're reading this.
+
 Following that, you can run a build and ``pip install`` from the local files:
 
 .. code-block:: bash
@@ -76,7 +94,7 @@ If you are in a hurry and want to install the developer version in whichever Pyt
 .. code-block:: bash
 
     %%bash
-    
+
     curl -sSL https://install.python-poetry.org | python - &&
     if [ ! -d "zoonyper" ] ; then git clone git@github.com:Living-with-machines/zoonyper.git; fi &&
     cd zoonyper &&
