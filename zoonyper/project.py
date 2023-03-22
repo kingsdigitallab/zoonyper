@@ -2066,7 +2066,8 @@ class Project(Utils):
     @property
     def subject_urls(self):
         """
-        Retrieves a list of all subject URLs.
+        Retrieves a dictionary of all subject URLs matched with the subject's
+        ID.
 
         The property compiles a list of URLs from the ``subjects`` DataFrame's
         ``locations`` column. If the ``_subject_urls`` attribute is empty, the
@@ -2084,11 +2085,13 @@ class Project(Utils):
             # Ensure subjects is set up
             self.subjects
 
-            self._subject_urls = [
-                y
-                for x in self.subjects.locations.apply(lambda x: x.values())
-                for y in x
-            ]
+            locations_series = self.subjects.locations.apply(
+                lambda x: x.values()
+            )
+
+            self._subject_urls = {
+                idx: list(x) for idx, x in locations_series.iteritems()
+            }
 
         return self._subject_urls
 
