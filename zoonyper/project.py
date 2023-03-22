@@ -1880,9 +1880,14 @@ class Project(Utils):
         if not downloads_directory:
             downloads_directory = self.download_dir
 
-        # Test download_directory's existence and validity
-        if not isinstance(downloads_directory, str) or not os.path.exists(
-            downloads_directory
+        # Try creating the downloads_directory
+        Path(downloads_directory).mkdir(parents=True, exist_ok=True)
+
+        # Test downloads_directory's existence and validity
+        if (
+            not isinstance(downloads_directory, str)
+            or not Path(downloads_directory).exists()
+            or not Path(downloads_directory).is_dir()
         ):
             raise RuntimeError(
                 "A required valid downloads directory was not provided."
