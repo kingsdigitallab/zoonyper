@@ -32,7 +32,14 @@ Here's how you can use Zoonyper in your own project:
 
 5. **Process the data and metadata**: Because the data structures in Zoonyper are Pandas DataFrames, you can process the classifications, subjects, and annotations in any way you like, using the tools and techniques that you're familiar with. For example, you might want to calculate statistics about the annotations, or create plots to visualize the data.
 
-\* The files needed can be fetched from clicking "Data Exports" in your project lab and downloading the classification report, subject export, workflow export, talk comments and talk tags exports. They should be named "classifications.csv", "subjects.csv", "workflows.csv", and "comments.json" and "tags.json" respectively, placed in a folder. This folder's path is what should be passed to the `Project` constructor.
+## Preparing your Zooniverse files
+Via Zooniverse's web 'Lab' interface, go to the Data Exports page. Request and download these exports:
+- classification report
+- subject export
+- workflow export
+- talk comments
+
+They should be named "classifications.csv", "subjects.csv", "workflows.csv", and "comments.json" and "tags.json" respectively, placed in a folder. This folder's path is what should be passed to the `Project` constructor.
 
 ## Installation
 
