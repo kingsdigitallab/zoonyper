@@ -27,7 +27,7 @@ pd.options.mode.chained_assignment = None  # type:ignore
 
 class Project(Utils):
     """
-        A Zoonyper project represents a single Zooniverse project and contains
+    A Zoonyper project represents a single Zooniverse project and contains
     all of the associated data required for analysis and visualization.
 
     Parameters
@@ -107,7 +107,7 @@ class Project(Utils):
         redact_users: bool = True,
         trim_paths: bool = True,
         parse_dates: str = "%Y-%m-%d",
-        thumbnails_url: str = "https://thumbnails.zooniverse.org/100x100/"
+        thumbnails_url: str = "https://thumbnails.zooniverse.org/100x100/",
     ):
         """
         Constructor method.
@@ -714,7 +714,9 @@ class Project(Utils):
                 file_name = url.split("/")[-1]
                 save_file = Path(current_dir / Path(file_name))
                 if not save_file.exists():
-                    r = requests.get(self.get_thumbnail_url(url), timeout=timeout)
+                    r = requests.get(
+                        self.get_thumbnail_url(url), timeout=timeout
+                    )
                     save_file.write_bytes(r.content)
                     has_downloaded = True
 
