@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import random
+import re
 import requests
 import time
 
@@ -56,6 +57,9 @@ class Project(Utils):
         If specified, a list of column names to be parsed as datetime objects
         when reading the CSV files. The default value is "%Y-%m-%d", which
         will parse columns named "created_at" and "updated_at".
+    thumbnails_url : str, optional
+        Base URL to download thumbnails, it defaults to
+        `https://thumbnails.zooniverse.org/100x100/`.
 
     Raises
     ------
@@ -103,6 +107,7 @@ class Project(Utils):
         redact_users: bool = True,
         trim_paths: bool = True,
         parse_dates: str = "%Y-%m-%d",
+        thumbnails_url: str = "https://thumbnails.zooniverse.org/100x100/"
     ):
         """
         Constructor method.
@@ -167,6 +172,8 @@ class Project(Utils):
         self.redact_users = redact_users
         self.trim_paths = trim_paths
         self.parse_dates = parse_dates
+
+        self.thumbnails_url = thumbnails_url
 
     @staticmethod
     def _user_logged_in(row: pd.Series) -> bool:
@@ -707,7 +714,7 @@ class Project(Utils):
                 file_name = url.split("/")[-1]
                 save_file = Path(current_dir / Path(file_name))
                 if not save_file.exists():
-                    r = requests.get(url, timeout=timeout)
+                    r = requests.get(self.get_thumbnail_url(url), timeout=timeout)
                     save_file.write_bytes(r.content)
                     has_downloaded = True
 
@@ -715,6 +722,25 @@ class Project(Utils):
                 time.sleep(random.randint(*sleep))
 
         return True
+
+    def get_thumbnail_url(self, image_url: str) -> str:
+        """
+        Get the thumbail URL for the given image URL.
+
+        Parameters
+        ----------
+        image_url : str
+            URL to get the thumbnail URL for.
+
+        Returns
+        -------
+        str
+            Thumbnail URL.
+        """
+        if image_url:
+            return re.sub("^https?://", self.thumbnails_url, image_url)
+
+        return image_url
 
     @property
     def inactive_workflow_ids(self) -> list:
