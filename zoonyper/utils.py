@@ -48,7 +48,7 @@ class Utils:
         Default: 50MB is the max size for files on Observable, but can be set
         to other values, should Observable allow for larger files.
 
-        .. versionadded:: 0.1.0
+    .. versionadded:: 0.1.0
     """
 
     MAX_SIZE_OBSERVABLE = 50000000
@@ -77,10 +77,15 @@ class Utils:
 
         .. versionadded:: 0.1.0
 
-        :param username: The username that you want to encode
-        :type username: str
-        :return: Username that is encoded to not be clear to human eyes
-        :rtype: Optional[str]
+        Parameters
+        ----------
+        username : str
+            The username that you want to encode
+
+        Returns
+        -------
+        str, optional
+            Username that is encoded to not be clear to human eyes
         """
 
         if pd.isna(username):
@@ -111,7 +116,6 @@ class Utils:
         str
             Filename from path
         """
-
         if isinstance(path, str):
             path = Path(path)
         elif isinstance(path, Path):
@@ -144,7 +148,6 @@ class Utils:
         -----
         Adapted from http://bit.ly/3yXqKs2.
         """
-
         string = re.sub(r"(_|-)+", " ", string).title().replace(" ", "")
 
         if string == "UserIp":
