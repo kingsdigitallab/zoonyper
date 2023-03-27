@@ -1,0 +1,2 @@
+workflow_id,display_name,version,active,classifications_count,pairwise,grouped,prioritized,primary_language,first_task,tutorial_subject_id,retired_set_member_subjects_count,tasks,retirement,aggregation,strings,minor_version
+12038,Classify and summarise articles (set 1),1,false,8,false,false,false,en,"",,0,{},"{""options"":{""count"":5},""criteria"":""classification_count""}",{},{},1

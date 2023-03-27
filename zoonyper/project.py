@@ -1,22 +1,20 @@
-from collections import ChainMap, Counter
-from matplotlib.figure import Figure
-from pathlib import Path
-from tqdm import tqdm
-from typing import Dict, List, Literal, Optional, Tuple, Union
-
-import pandas as pd
-
 import hashlib
 import json
 import os
 import random
 import re
-import requests
 import time
+from collections import ChainMap, Counter
+from pathlib import Path
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
-from .utils import Utils, TASK_COLUMN, get_current_dir
+import pandas as pd
+import requests
+from matplotlib.figure import Figure
+from tqdm import tqdm
+
 from .log import log
-
+from .utils import TASK_COLUMN, Utils, get_current_dir
 
 """
 TODO: this is not elegant but here we are - to save `flattened[column]`
@@ -979,6 +977,7 @@ class Project(Utils):
             ):
                 subjects = pd.read_csv(self.subjects_path)
                 subjects.set_index("subject_id", inplace=True)
+                subjects = subjects[subjects["workflow_id"] > 0]
                 subjects = self._fix_json_cols(
                     subjects, columns=["metadata", "locations"]
                 )

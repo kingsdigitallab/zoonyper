@@ -34,7 +34,7 @@ Here's how you can use Zoonyper in your own project:
 
 ## Preparing your Zooniverse files
 Via Zooniverse's web 'Lab' interface, go to the Data Exports page. Request and download these exports:
-- classification report
+- classification export
 - subject export
 - workflow export
 - talk comments
