@@ -979,6 +979,7 @@ class Project(Utils):
             ):
                 subjects = pd.read_csv(self.subjects_path)
                 subjects.set_index("subject_id", inplace=True)
+                subjects = subjects[subjects["workflow_id"] > 0]
                 subjects = self._fix_json_cols(
                     subjects, columns=["metadata", "locations"]
                 )
