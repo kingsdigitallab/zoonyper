@@ -7,7 +7,7 @@ authors = ["Kalle Westerling <kalle.westerling@bl.uk>"]
 [tool.poetry.dependencies]
 python = "^3.8.10"
 pandas = "1.4.1"
-requests = "2.25.1"
+requests = "^2.25"
 furo = "^2022.4.7"
 tqdm = "^4.64.0"
 ipywidgets = "^7.7.0"
