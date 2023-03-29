@@ -1,4 +1,4 @@
-# About ``zoonyper``
+# About `zoonyper`
 
 [![All Contributors](https://img.shields.io/github/all-contributors/Living-with-machines/zoonyper?color=ee8449&style=flat-square)](#contributors)
 
@@ -18,22 +18,24 @@ Here's how you can use Zoonyper in your own project:
 
 2. **Import the `Project` class**: Once you've installed the repository, you can import the `Project` class into your own Python code. You can do this by adding the following line to the top of your code:
 
-    ```py
-    from zoonyper import Project
-    ```
+   ```py
+   from zoonyper import Project
+   ```
 
 3. **Initialize a `Project` object**: To start using the Project class, you'll need to create a Project object. You can do this by calling the constructor and passing in the path to the directory that contains all the files from your Zooniverse project lab\*:
 
-    ```py
-    project = Project("<path to the directory with all necessary files>")
-    ```
+   ```py
+   project = Project("<path to the directory with all necessary files>")
+   ```
 
 4. **Access the project's data and metadata**: Once you have a `Project` object, you can access its annotations by using the `.classifications` attribute. This attribute is a Pandas DataFrame, where each row contains information about a single classification, including annotations.
 
 5. **Process the data and metadata**: Because the data structures in Zoonyper are Pandas DataFrames, you can process the classifications, subjects, and annotations in any way you like, using the tools and techniques that you're familiar with. For example, you might want to calculate statistics about the annotations, or create plots to visualize the data.
 
 ## Preparing your Zooniverse files
+
 Via Zooniverse's web 'Lab' interface, go to the Data Exports page. Request and download these exports:
+
 - classification export
 - subject export
 - workflow export
@@ -56,6 +58,22 @@ Because this project is in **active development**, you need to install from the 
 ## Documentation
 
 The full documentation is currently available with [`sphinx`](https://www.sphinx-doc.org/en/master/) in the [`docs`](docs) directory.
+
+## Data model
+
+The Zoonyper dataframes' data model is illustrated in the following diagram.
+
+```mermaid
+erDiagram
+    workflow ||--|{ annotation : has
+    workflow }|--o{ subject_set: has
+    subject_set }|--|{ subject: contains
+    annotation ||--|| subject: on
+    user ||..|{ annotation : makes
+    user ||..|{ comment : writes
+    tag }|--|{ comment : in
+    comment ||--o{ subject : "written about"
+```
 
 ## Contributors
 
