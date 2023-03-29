@@ -1031,6 +1031,8 @@ class Project(Utils):
                 comments = pd.read_json(self.comments_path)
                 comments.set_index("comment_id", inplace=True)
 
+                # TODO: Run comment_user_id through self.redact_user_name?
+
                 comments = self._fix_columns(
                     comments,
                     {
@@ -1052,6 +1054,8 @@ class Project(Utils):
             ):
                 tags = pd.read_json(self.tags_path)
                 tags.set_index("id", inplace=True)
+
+                # TODO: Run user_id through self.redact_user_name?
 
                 # Fix tags' types
                 tags = self._fix_columns(
