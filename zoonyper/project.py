@@ -1438,6 +1438,18 @@ class Project(Utils):
 
         return self._subjects
 
+    def are_subjects_disambiguated(self) -> bool:
+        """
+        Checks if `disambiguate_subjects` has been successfully executed before to disambiguate
+        subjects.
+
+        Returns
+        -------
+        bool
+            True if subjects are disambiguated, False otherwise.
+        """
+        return "subject_id_disambiguated" in self.subjects.columns
+
     @property
     def classifications(self) -> pd.DataFrame:
         """

@@ -27,3 +27,8 @@ class TestProject:
             self.project.get_thumbnail_url("ftp://image.url")
             == "ftp://image.url"
         )
+
+    def are_subjects_disambiguated(self):
+        assert self.project.are_subjects_disambiguated() == False
+        self.project.disambiguate_subjects("tests/data/downloads")
+        assert self.project.are_subjects_disambiguated() == True
