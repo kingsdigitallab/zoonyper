@@ -1,1 +1,44 @@
-[]
+[
+  {
+    "board_id": 5432,
+    "board_title": "Tech Tips and Tricks",
+    "board_description": "Share your best tech-related advice, suggestions, and hacks here!",
+    "discussion_id": 7890123,
+    "discussion_title": "Smart Home Automation: Pros and Cons",
+    "comment_id": 9876543,
+    "comment_body": "I've been considering setting up a smart home system. I would love to hear people's experiences and opinions on the matter!",
+    "comment_focus_id": null,
+    "comment_focus_type": null,
+    "comment_user_id": 1357924,
+    "comment_user_login": "techenthusiast",
+    "comment_created_at": "2022-11-13T10:15:32.123Z"
+  },
+  {
+    "board_id": 1938,
+    "board_title": "Travel Destinations",
+    "board_description": "Share your favorite travel destinations, tips, and experiences with fellow travelers.",
+    "discussion_id": 2468101,
+    "discussion_title": "Best Places to Visit in Japan",
+    "comment_id": 8642098,
+    "comment_body": "I highly recommend visiting Kyoto, especially during the cherry blossom season. The temples and shrines are breathtaking, and the atmosphere is serene.",
+    "comment_focus_id": null,
+    "comment_focus_type": null,
+    "comment_user_id": 9753102,
+    "comment_user_login": "globetrotter",
+    "comment_created_at": "2023-02-20T08:45:01.567Z"
+  },
+  {
+    "board_id": 6274,
+    "board_title": "Photography Techniques",
+    "board_description": "Discuss and share photography tips, techniques, and ideas.",
+    "discussion_id": 5152537,
+    "discussion_title": "Night Photography Tips",
+    "comment_id": 7293846,
+    "comment_body": "One important tip for night photography is to use a tripod to stabilize your camera. This will help prevent camera shake and ensure that your photos come out sharp and clear.",
+    "comment_focus_id": null,
+    "comment_focus_type": null,
+    "comment_user_id": 6382950,
+    "comment_user_login": "shutterbug",
+    "comment_created_at": "2021-07-12T18:30:29.756Z"
+  }
+]
