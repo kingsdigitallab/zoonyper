@@ -4,6 +4,9 @@
 
 **Zoonyper** is a Python library, designed to make it easy for users to import and process Zooniverse annotations and their metadata in your own Python code. It is especially designed for use in [Jupyter Notebooks](https://jupyter.org/).
 
+## Purpose
+Zoonpyter can process the output files from the Zooniverse citizen science platform, and facilitate data wrangling, compression, and output into JSON and CSV files. The output files can then be more easily used in e.g. Observable visualisations.
+
 ## Background
 
 The library was created as part of the [Living with Machines project](https://livingwithmachines.ac.uk), a project aimed to generate new historical perspectives on the effects of the mechanisation of labour on the lives of ordinary people during the long nineteenth century. As part of that work, we have used newspapers for historical research at scale. In that work, it has been important for us to use the newspapers also as source documents for crowdsourced activities. The platform used for the crowdsourced activities is Zooniverse, created for citizen science projects where volunteers contribute to scientific research projects by annotating and categorizing images or other data. The annotations created by volunteers are collected as "classifications" in the Zooniverse system.
