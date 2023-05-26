@@ -5,7 +5,9 @@
 **Zoonyper** is a Python library, designed to make it easy for users to import and process Zooniverse annotations and their metadata in your own Python code. It is especially designed for use in [Jupyter Notebooks](https://jupyter.org/).
 
 ## Purpose
-Zoonpyter can process the output files from the Zooniverse citizen science platform, and facilitate data wrangling, compression, and output into JSON and CSV files. The output files can then be more easily used in e.g. Observable visualisations.
+The [Zooniverse citizen science platform's Project Builder](https://www.zooniverse.org/lab) allows anyone to create crowdsourced tasks using uploaded or [imported images](https://blogs.bl.uk/digital-scholarship/2022/04/importing-images-into-zooniverse-with-a-iiif-manifest-introducing-an-experimental-feature.html) and other media. However, its flexibility means that the data created can be difficult to process.
+
+Zoonpyter can help process the output files from the Zooniverse citizen science platform, and facilitate data wrangling, compression, and output into JSON and CSV files. The output files can then be more easily used in e.g. Observable visualisations, Excel and other tools.
 
 ## Background
 
