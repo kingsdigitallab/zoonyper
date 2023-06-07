@@ -60,7 +60,9 @@ Because this project is in **active development**, you need to install from the 
 
 ## Documentation
 
-The full documentation is currently available with [`sphinx`](https://www.sphinx-doc.org/en/master/) in the [`docs`](docs) directory.
+You can see the public documentation on https://living-with-machines.github.io/zoonyper.
+
+You can contribute to the documentation using [`sphinx`](https://www.sphinx-doc.org/en/master/) to edit and render the [`docs`](docs) directory.
 
 ## Data model
 
