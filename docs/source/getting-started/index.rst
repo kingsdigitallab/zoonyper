@@ -1,5 +1,5 @@
 Getting Started
-##################
+===============
 
 .. rubric:: Content
 

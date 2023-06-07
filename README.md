@@ -7,7 +7,7 @@
 ## Purpose
 The [Zooniverse citizen science platform's Project Builder](https://www.zooniverse.org/lab) allows anyone to create crowdsourced tasks using uploaded or [imported images](https://blogs.bl.uk/digital-scholarship/2022/04/importing-images-into-zooniverse-with-a-iiif-manifest-introducing-an-experimental-feature.html) and other media. However, its flexibility means that the data created can be difficult to process.
 
-Zoonpyter can help process the output files from the Zooniverse citizen science platform, and facilitate data wrangling, compression, and output into JSON and CSV files. The output files can then be more easily used in e.g. Observable visualisations, Excel and other tools.
+Zoonyper can help process the output files from the Zooniverse citizen science platform, and facilitate data wrangling, compression, and output into JSON and CSV files. The output files can then be more easily used in e.g. Observable visualisations, Excel and other tools.
 
 ## Background
 
@@ -60,11 +60,13 @@ $ pip install zoonyper
 ```
 -->
 
-Because this project is in **active development**, you need to install from the repository for the time being. In order to do so, follow [the installation instructions](docs/source/getting-started/install.rst).
+Because this project is in **active development**, you need to install from the repository for the time being. In order to do so, follow [the installation instructions](docs/source/installing.rst).
 
 ## Documentation
 
-The full documentation is currently available with [`sphinx`](https://www.sphinx-doc.org/en/master/) in the [`docs`](docs) directory.
+You can see the public documentation on https://living-with-machines.github.io/zoonyper.
+
+You can contribute to the documentation using [`sphinx`](https://www.sphinx-doc.org/en/master/) to edit and render the [`docs`](docs) directory.
 
 ## Data model
 

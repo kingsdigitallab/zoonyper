@@ -1,5 +1,5 @@
 Installing Zoonyper
-###################
+===================
 
 When in production, you can use PyPI to install zoonyper:
 
@@ -9,13 +9,14 @@ When in production, you can use PyPI to install zoonyper:
 
 .. warning::
 
-    This command will not work currently, as this package is not yet published on PyPI.
+    This command will not work currently, as this package is not yet published
+    on PyPI.
 
-=================================
 In development
-=================================
+--------------
 
-Because this project is in active development, you will likely need to install from the repository for the time being.
+Because this project is in active development, you will likely need to install
+from the repository for the time being.
 
 In order to do so, you need to first ensure that you have installed Poetry:
 
@@ -25,11 +26,15 @@ In order to do so, you need to first ensure that you have installed Poetry:
 
 .. warning::
 
-    Make sure the command above, after the pipe ``|`` refers to the correctly linked Python, i.e. you may want it to refer to ``python`` or ``python3`` or whatever your symlinked binary is called.
+    Make sure the command above, after the pipe ``|`` refers to the correctly
+    linked Python, i.e. you may want it to refer to ``python`` or ``python3``
+    or whatever your symlinked binary is called.
 
 .. note::
 
-    Don't forget to add `export PATH="/home/<username>/.local/bin:$PATH"` to your shell configuration file in order to get access to the ``poetry`` tool on your command line.
+    Don't forget to add `export PATH="/home/<username>/.local/bin:$PATH"` to
+    your shell configuration file in order to get access to the ``poetry``
+    tool on your command line.
 
 Then, clone the repository:
 
@@ -67,11 +72,17 @@ Then, install the dependencies:
 
             ["In /home/<username>/.cache/pypoetry/artifacts/38/be/e4/0afbe5654cdc0168ebfaf6864c20009c2eec3dd953961a7d44e0ed3fe9/furo-2022.12.7-py3-none-any.whl, hash / size of furo/__init__.py didn't match RECORD", "In /home/<username>/.cache/pypoetry/artifacts/38/be/e4/0afbe5654cdc0168ebfaf6864c20009c2eec3dd953961a7d44e0ed3fe9/furo-2022.12.7-py3-none-any.whl, hash / size of furo/_demo_module.py didn't match RECORD", ... [etc]
 
-    If this is the case, see the solution here: https://github.com/python-poetry/poetry/issues/7691#issue-1632193622
+    If this is the case, see the solution in
+    `the python-poetry repository <https://github.com/python-poetry/poetry/issues/7691#issue-1632193622>`_
 
-    The easiest solution is to exit poetry (by running ``exit`` and running a ``pip install poetry==1.4.0``).
+    The easiest solution is to exit poetry (by running ``exit`` and running:
 
-    This is a problem with poetry 1.4.1 so it may be solved by the time you're reading this.
+    .. code-block:: bash
+
+        $ pip install poetry==1.4.0
+
+    This is a problem with poetry 1.4.1 so it may be solved by the time you're
+    reading this.
 
 Following that, you can run a build and ``pip install`` from the local files:
 
@@ -79,17 +90,21 @@ Following that, you can run a build and ``pip install`` from the local files:
 
     $ poetry build && pip install dist/zoonyper-0.1.0.tar.gz
 
-Now you should be able to use ``zoonyper`` as a regular package on your local computer.
+Now you should be able to use ``zoonyper`` as a regular package on your local
+computer.
 
 .. warning::
 
-    If you change the source code (located in the ``zoonyper`` directory in the repository), you will need to rerun the ``poetry build`` and the ``pip install dist/zoonyper-0.1.0.tar.gz`` commands again.
+    If you change the source code (located in the ``zoonyper`` directory in
+    the repository), you will need to rerun the ``poetry build`` and the
+    ``pip install dist/zoonyper-0.1.0.tar.gz`` commands again.
 
-=================================
 Quick Install in Jupyter Notebook
-=================================
+---------------------------------
 
-If you are in a hurry and want to install the developer version in whichever Python kernel you're currently running in a Notebook, here's a handy bash script that you can copy and paste into a Jupyter notebook:
+If you are in a hurry and want to install the developer version in whichever
+Python kernel you're currently running in a Notebook, here's a handy bash
+script that you can copy and paste into a Jupyter notebook:
 
 .. code-block:: bash
 
