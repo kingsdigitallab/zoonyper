@@ -4,11 +4,18 @@
 
 **Zoonyper** is a Python library, designed to make it easy for users to import and process Zooniverse annotations and their metadata in your own Python code. It is especially designed for use in [Jupyter Notebooks](https://jupyter.org/).
 
+## Purpose
+The [Zooniverse citizen science platform's Project Builder](https://www.zooniverse.org/lab) allows anyone to create crowdsourced tasks using uploaded or [imported images](https://blogs.bl.uk/digital-scholarship/2022/04/importing-images-into-zooniverse-with-a-iiif-manifest-introducing-an-experimental-feature.html) and other media. However, its flexibility means that the data created can be difficult to process.
+
+Zoonyper can help process the output files from the Zooniverse citizen science platform, and facilitate data wrangling, compression, and output into JSON and CSV files. The output files can then be more easily used in e.g. Observable visualisations, Excel and other tools.
+
 ## Background
 
-The library was created as part of the [Living with Machines project](https://livingwithmachines.ac.uk), a project aimed to generate new historical perspectives on the effects of the mechanisation of labour on the lives of ordinary people during the long nineteenth century. As part of that work, we have used newspapers for historical research at scale. In that work, it has been important for us to use the newspapers also as source documents for crowdsourced activities. The platform used for the crowdsourced activities is Zooniverse, created for citizen science projects where volunteers contribute to scientific research projects by annotating and categorizing images or other data. The annotations created by volunteers are collected as "classifications" in the Zooniverse system.
+The library was created as part of the [Living with Machines project](https://livingwithmachines.ac.uk), a research project developing historical and data science methods to study the effects of the mechanisation on the lives of ordinary people during the long nineteenth century. 
 
-In the Living with Machines project, we used the Zooniverse platform to annotate articles extracted from historical newspapers. We winnowed out articles that were deemed unsuitable or irrelevant for the study, and then asked volunteers to help us with more detailed classifications on the remaining articles. This helps to ensure that the annotations are focused and accurate, and that the results of the study are meaningful and relevant. The articles, along with metadata, were included in Zooniverse manifests. The final goal for the research overall was to use the annotations to study the content of these historical newspapers and gain insights into the events and trends of the past.
+As part of that work, we used digitised historical newspapers at scale. We chose crowdsourcing as a method for some of this work so that we could invite the public to actively contribute to our research, observe how training data is created and annotated for machine learning, and to view the source material we were using across the project. We used the Zooniverse project builder as it is designed for citizen science projects where volunteers contribute to scientific research projects by annotating and categorizing images or other data. The annotations created by volunteers are collected as "classifications" in the Zooniverse system.
+
+We queried digitised newspapers for keywords related to our research topics, uploaded the images, automatically transcribed text (OCR) and metadata about the selected articles to Zooniverse, then asked volunteers to help us with classifications or transcriptions (typing in text) of those articles. The final goal for the research overall was to use the annotations to study the content of these historical newspapers and gain insights into the events and trends of the past.
 
 ## Getting started
 
@@ -53,11 +60,13 @@ $ pip install zoonyper
 ```
 -->
 
-Because this project is in **active development**, you need to install from the repository for the time being. In order to do so, follow [the installation instructions](docs/source/getting-started/install.rst).
+Because this project is in **active development**, you need to install from the repository for the time being. In order to do so, follow [the installation instructions](docs/source/installing.rst).
 
 ## Documentation
 
-The full documentation is currently available with [`sphinx`](https://www.sphinx-doc.org/en/master/) in the [`docs`](docs) directory.
+You can see the public documentation on https://living-with-machines.github.io/zoonyper.
+
+You can contribute to the documentation using [`sphinx`](https://www.sphinx-doc.org/en/master/) to edit and render the [`docs`](docs) directory.
 
 ## Data model
 

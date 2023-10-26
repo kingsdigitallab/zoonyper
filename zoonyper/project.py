@@ -965,6 +965,8 @@ class Project(Utils):
                     classifications.user_name = (
                         classifications.user_name.apply(self.redact_username)
                     )
+
+                    # Preserve anonymity in object
                     self._redacted = {}
 
                 self._raw_frames["classifications"] = classifications
@@ -1031,7 +1033,12 @@ class Project(Utils):
                 comments = pd.read_json(self.comments_path)
                 comments.set_index("comment_id", inplace=True)
 
-                # TODO: Run comment_user_id through self.redact_user_name?
+                if self.redact_users:
+                    comments.comment_user_id = comments.comment_user_id.apply(
+                        self.redact_username
+                    )
+                    # Preserve anonymity in object
+                    self._redacted = {}
 
                 comments = self._fix_columns(
                     comments,
@@ -1039,7 +1046,7 @@ class Project(Utils):
                         "board_id": int,
                         "discussion_id": int,
                         "comment_focus_id": int,
-                        "comment_user_id": int,
+                        "comment_user_id": str,
                         "comment_created_at": "date",
                     },
                 )
@@ -1055,13 +1062,16 @@ class Project(Utils):
                 tags = pd.read_json(self.tags_path)
                 tags.set_index("id", inplace=True)
 
-                # TODO: Run user_id through self.redact_user_name?
+                if self.redact_users:
+                    tags.user_id = tags.user_id.apply(self.redact_username)
+                    # Preserve anonymity in object
+                    self._redacted = {}
 
                 # Fix tags' types
                 tags = self._fix_columns(
                     tags,
                     {
-                        "user_id": int,
+                        "user_id": str,
                         "taggable_id": int,
                         "comment_id": int,
                         "created_at": "date",

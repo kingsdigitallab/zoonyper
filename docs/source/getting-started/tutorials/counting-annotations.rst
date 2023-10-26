@@ -1,7 +1,10 @@
 Counting annotations
-####################
+====================
 
-:meth:`zoonyper.project.Project.classification_counts` is a useful method for retrieving the number of different classifications per subject ID for any given workflow. It takes two arguments, the workflow ID (passed as ``workflow_id``) and the task number (``task_number``) that you want to extract:
+:meth:`zoonyper.project.Project.classification_counts` is a useful method for
+retrieving the number of different classifications per subject ID for any given
+workflow. It takes two arguments, the workflow ID (passed as ``workflow_id``)
+and the task number (``task_number``) that you want to extract:
 
 .. code-block:: python
 
@@ -11,7 +14,8 @@ Counting annotations
 
   The method currently works best with text annotations.
 
-Using ``classification_counts``, we can also easily check for "agreement", say when all annotators have agreed on *one* classification:
+Using ``classification_counts``, we can also easily check for "agreement", say
+when all annotators have agreed on *one* classification:
 
 .. code-block:: python
     :linenos:
@@ -26,7 +30,8 @@ Using ``classification_counts``, we can also easily check for "agreement", say w
 
     print(agreement)
 
-Similarly, we can construct a code block for whenever at least **four annotators** have agreed on one response for a subject:
+Similarly, we can construct a code block for whenever at least **four
+annotators** have agreed on one response for a subject:
 
 .. code-block:: python
     :linenos:
