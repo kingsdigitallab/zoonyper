@@ -1973,7 +1973,13 @@ class Project(Utils):
 
             # Test to ensure that there are not multiple files with same name
             # but different hashes
-            if [x for x, y in hashes_by_file.items() if len(y) > 1]:
+            duplicates = [filename for filename, hashes in hashes_by_file.items() if len(hashes) > 1]
+
+            if duplicates:
+                print("Files with the same name but different hashes:")
+                for filename in duplicates:
+                    print(filename)
+
                 raise RuntimeError(
                     "Looks like there are files with the same name that are \
                     different from one another. This should not be the case \
